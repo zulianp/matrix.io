@@ -8,6 +8,7 @@ typedef struct {
     char *rowptr;
     char *colidx;
     char *values;
+
     ptrdiff_t grows;
     ptrdiff_t lrows;
     ptrdiff_t nnz;
