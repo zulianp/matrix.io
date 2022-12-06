@@ -28,6 +28,15 @@ int crs_read(MPI_Comm comm,
              MPI_Datatype values_type,
              crs_t *crs);
 
+int crs_read_str(MPI_Comm comm,
+             const char *rowptr_path,
+             const char *colidx_path,
+             const char *values_path,
+             const char *rowptr_type,
+             const char *colidx_type,
+             const char *values_type,
+             crs_t *crs);
+
 /// Free memory
 int crs_free(crs_t *crs);
 

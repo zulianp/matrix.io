@@ -6,6 +6,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int crs_read_str(MPI_Comm comm,
+                 const char *rowptr_path,
+                 const char *colidx_path,
+                 const char *values_path,
+                 const char *rowptr_type_str,
+                 const char *colidx_type_str,
+                 const char *values_type_str,
+                 crs_t *crs) {
+    MPI_Datatype rowptr_type = string_to_mpi_datatype(rowptr_type_str);
+    MPI_Datatype colidx_type = string_to_mpi_datatype(colidx_type_str);
+    MPI_Datatype values_type = string_to_mpi_datatype(values_type_str);
+    return crs_read(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
+}
+
 int crs_read(MPI_Comm comm,
              const char *rowptr_path,
              const char *colidx_path,
@@ -15,7 +29,7 @@ int crs_read(MPI_Comm comm,
              MPI_Datatype values_type,
              crs_t *crs) {
     int rank, size;
-    
+
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 
@@ -23,7 +37,7 @@ int crs_read(MPI_Comm comm,
     MPI_Offset rowptr_nbytes = -1;
     int rowptr_type_size = 0;
 
-    CATCH_MPI_ERROR(MPI_File_open(comm, rowptr_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));    
+    CATCH_MPI_ERROR(MPI_File_open(comm, rowptr_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
     CATCH_MPI_ERROR(MPI_File_get_size(file, &rowptr_nbytes));
     CATCH_MPI_ERROR(MPI_Type_size(rowptr_type, &rowptr_type_size));
 
@@ -54,7 +68,7 @@ int crs_read(MPI_Comm comm,
     ptrdiff_t offset = rank * uniform_split;
     offset += MIN(rank, remainder);
 
-    char * rowptr = (char *)malloc((nlocal + 1) * rowptr_type_size);
+    char *rowptr = (char *)malloc((nlocal + 1) * rowptr_type_size);
 
     MPI_Status status;
 
@@ -62,8 +76,7 @@ int crs_read(MPI_Comm comm,
     // Read rowptr
     ///////////////////////////////////////////////////////
 
-    CATCH_MPI_ERROR(
-        MPI_File_read_at_all(file, offset * rowptr_type_size, rowptr, nlocal + 1, rowptr_type, &status));
+    CATCH_MPI_ERROR(MPI_File_read_at_all(file, offset * rowptr_type_size, rowptr, nlocal + 1, rowptr_type, &status));
     CATCH_MPI_ERROR(MPI_File_close(&file));
 
     ///////////////////////////////////////////////////////
@@ -80,7 +93,7 @@ int crs_read(MPI_Comm comm,
 
     crs->nnz = nnz;
     CATCH_MPI_ERROR(MPI_Type_size(colidx_type, &colidx_type_size));
-    
+
     char *colidx = (char *)malloc(nnz * colidx_type_size);
 
     CATCH_MPI_ERROR(MPI_File_open(comm, colidx_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
@@ -95,7 +108,7 @@ int crs_read(MPI_Comm comm,
 
     int values_type_size = 0;
     CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
-    char * values = (char *)malloc(nnz * values_type_size);
+    char *values = (char *)malloc(nnz * values_type_size);
 
     CATCH_MPI_ERROR(MPI_File_open(comm, values_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
 
