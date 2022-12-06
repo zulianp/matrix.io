@@ -6,13 +6,16 @@ else
 	CFLAGS += -pedantic -O3 -DNDEBUG
 endif
 
-GOALS = test
+GOALS = test print_crs
 
 CC=mpicc
 
 all : $(GOALS)
 
-test : test.o matrixio_crs.o
+test : test.o matrixio_crs.o utils.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
+
+print_crs : print_crs.o matrixio_crs.o utils.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
 
 %.o : %.c

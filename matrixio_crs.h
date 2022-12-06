@@ -5,13 +5,17 @@
 #include <stddef.h>
 
 typedef struct {
-    void *rowptr;
-    void *colidx;
-    void *values;
+    char *rowptr;
+    char *colidx;
+    char *values;
     ptrdiff_t grows;
     ptrdiff_t lrows;
     ptrdiff_t nnz;
     ptrdiff_t start;
+
+    int rowptr_type_size;
+    int colidx_type_size;
+    int values_type_size;
 } crs_t;
 
 int crs_read(MPI_Comm comm,
