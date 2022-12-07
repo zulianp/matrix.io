@@ -129,7 +129,7 @@ int crs_read(MPI_Comm comm,
 
     crs->grows = nrows;
     crs->lrows = nlocal;
-    crs->grows = gnnz_bytes/colidx_type_size;
+    crs->gnnz = gnnz_bytes/colidx_type_size;
     crs->lnnz = nnz;
     crs->start = start;
 
@@ -137,6 +137,8 @@ int crs_read(MPI_Comm comm,
     crs->colidx_type_size = colidx_type_size;
     crs->values_type_size = values_type_size;
     crs->rowoffset = offset;
+
+    // printf("[read] grows=%ld nrows=%ld nlocal=%ld\n", (long)crs->grows, (long)nrows, (long)nlocal);
     return 0;
 }
 
@@ -167,6 +169,8 @@ int crs_write(MPI_Comm comm,
     CATCH_MPI_ERROR(MPI_Type_size(rowptr_type, &rowptr_type_size));
     CATCH_MPI_ERROR(MPI_Type_size(colidx_type, &colidx_type_size));
     CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+
+    // printf("grows=%ld\n", (long)crs->grows);
 
     {
         // Write rowptr

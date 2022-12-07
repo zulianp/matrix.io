@@ -54,12 +54,14 @@ int array_read(MPI_Comm comm,
     return 0;
 }
 
-int array_write(MPI_Comm comm, const char *path, MPI_Datatype type, const void *data, ptrdiff_t nlocal, ptrdiff_t out_nglobal)
+int array_write(MPI_Comm comm, const char *path, MPI_Datatype type, const void *data, ptrdiff_t nlocal, ptrdiff_t nglobal)
 {
 	int rank, size;
 
 	MPI_Comm_rank(comm, &rank);
 	MPI_Comm_size(comm, &size);
+
+	assert(nlocal <= nglobal);
 
 	MPI_Status status;
 	MPI_Offset nbytes;
@@ -67,16 +69,22 @@ int array_write(MPI_Comm comm, const char *path, MPI_Datatype type, const void *
 	int type_size;
 
 	CATCH_MPI_ERROR(MPI_Type_size(type, &type_size));
-	nbytes = out_nglobal * type_size;
+	nbytes = nglobal * type_size;
 
 	CATCH_MPI_ERROR(MPI_File_open(comm, path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file)); 
 	MPI_File_set_size(file, nbytes);
 
-	long lnl = nlocal;
-	long offset;
 
+
+	long lnl = nlocal;
+	long offset = 0;
+
+	if(size > 1) {
 	CATCH_MPI_ERROR(MPI_Exscan(&lnl, &offset, 1, MPI_LONG,
 	               MPI_SUM, comm));
+}
+
+	// printf("nbytes=%ld, offset=%ld\n", (long)nbytes, (long)(offset));
 
 
 	CATCH_MPI_ERROR(
