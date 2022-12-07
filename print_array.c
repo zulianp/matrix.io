@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "matrixio_crs.h"
 #include "matrixio_array.h"
+#include "matrixio_crs.h"
 
 #include "utils.h"
 

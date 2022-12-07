@@ -1,14 +1,14 @@
 #ifndef MATRIX_IO_UTILS_H
 #define MATRIX_IO_UTILS_H
 
+#include <assert.h>
 #include <mpi.h>
 #include <stddef.h>
-#include <assert.h>
 
 #define CATCH_MPI_ERROR(err)      \
     {                             \
         if (err != MPI_SUCCESS) { \
-            assert(0);        \
+            assert(0);            \
         }                         \
     }
 
@@ -19,4 +19,4 @@ double to_double(MPI_Datatype type, const char *data);
 
 MPI_Datatype string_to_mpi_datatype(const char *name);
 
-#endif //MATRIX_IO_UTILS_H
+#endif  // MATRIX_IO_UTILS_H

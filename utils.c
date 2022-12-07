@@ -20,40 +20,37 @@ ptrdiff_t to_ptrdiff_t(MPI_Datatype type, const char *data) {
     return 666;
 }
 
-double to_double(MPI_Datatype type, const char *data)
-{
-	if (type == MPI_FLOAT) {
-	    return *((float *)data);
-	}
+double to_double(MPI_Datatype type, const char *data) {
+    if (type == MPI_FLOAT) {
+        return *((float *)data);
+    }
 
-	if (type == MPI_DOUBLE) {
-	    return *((double *)data);
-	}
+    if (type == MPI_DOUBLE) {
+        return *((double *)data);
+    }
 
-	// Add missing cases!!?
-	MPI_Abort(MPI_COMM_WORLD, 1);
-	return 666;
+    // Add missing cases!!?
+    MPI_Abort(MPI_COMM_WORLD, 1);
+    return 666;
 }
 
-MPI_Datatype string_to_mpi_datatype(const char *name)
-{	
-	if(!strcmp(name, "float")) {
-		return MPI_FLOAT;
-	}
+MPI_Datatype string_to_mpi_datatype(const char *name) {
+    if (!strcmp(name, "float")) {
+        return MPI_FLOAT;
+    }
 
-	if(!strcmp(name, "double")) {
-		return MPI_DOUBLE;
-	}
+    if (!strcmp(name, "double")) {
+        return MPI_DOUBLE;
+    }
 
-	if(!strcmp(name, "int")) {
-		return MPI_INT;
-	}
+    if (!strcmp(name, "int")) {
+        return MPI_INT;
+    }
 
-	if(!strcmp(name, "long")) {
-		return MPI_LONG;
-	}
+    if (!strcmp(name, "long")) {
+        return MPI_LONG;
+    }
 
-	MPI_Abort(MPI_COMM_WORLD, 1);
-	return MPI_CHAR;
-}	
-
+    MPI_Abort(MPI_COMM_WORLD, 1);
+    return MPI_CHAR;
+}

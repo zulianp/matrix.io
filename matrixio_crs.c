@@ -129,7 +129,7 @@ int crs_read(MPI_Comm comm,
 
     crs->grows = nrows;
     crs->lrows = nlocal;
-    crs->gnnz = gnnz_bytes/colidx_type_size;
+    crs->gnnz = gnnz_bytes / colidx_type_size;
     crs->lnnz = nnz;
     crs->start = start;
 
@@ -178,8 +178,12 @@ int crs_write(MPI_Comm comm,
 
         MPI_File_set_size(file, (crs->grows + 1) * rowptr_type_size);
 
-        CATCH_MPI_ERROR(
-            MPI_File_write_at_all(file, crs->rowoffset * rowptr_type_size, crs->rowptr, crs->lrows + (rank ==  size - 1), rowptr_type, &status));
+        CATCH_MPI_ERROR(MPI_File_write_at_all(file,
+                                              crs->rowoffset * rowptr_type_size,
+                                              crs->rowptr,
+                                              crs->lrows + (rank == size - 1),
+                                              rowptr_type,
+                                              &status));
 
         CATCH_MPI_ERROR(MPI_File_close(&file));
     }
