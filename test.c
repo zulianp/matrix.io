@@ -25,6 +25,16 @@ int main(int argc, char *argv[]) {
                  MPI_FLOAT,
                  &crs);
 
+
+        crs_write(comm,
+                 "data/test/dump.rowindex.raw",
+                 "data/test/dump.colindex.raw",
+                 "data/test/dump.value.raw",
+                 MPI_LONG,
+                 MPI_INT,
+                 MPI_FLOAT,
+                 &crs);
+
         crs_free(&crs);
     }
 

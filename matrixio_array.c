@@ -28,7 +28,7 @@ int array_read(MPI_Comm comm,
 
     ptrdiff_t n = nbytes / type_size;
     if (n * type_size != nbytes) {
-        assert(false);
+        assert(0);
         fprintf(stderr, "array_read: Wrong datatype - data pair\n");
         return 1;
     }
