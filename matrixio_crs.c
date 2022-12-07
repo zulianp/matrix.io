@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int crs_read_str(MPI_Comm comm,
                  const char *rowptr_path,
@@ -213,6 +214,25 @@ int crs_write(MPI_Comm comm,
     }
 
     return 0;
+}
+
+int crs_write_folder(MPI_Comm comm,
+                     const char *folder,
+                     MPI_Datatype rowptr_type,
+                     MPI_Datatype colidx_type,
+                     MPI_Datatype values_type,
+                     crs_t *crs) {
+    assert(strlen(folder) + 11 < 1024);
+
+    char rowptr_path[1024];
+    char colidx_path[1024];
+    char values_path[1024];
+
+    sprintf(rowptr_path, "%s/rowptr.raw", folder);
+    sprintf(colidx_path, "%s/colidx.raw", folder);
+    sprintf(values_path, "%s/values.raw", folder);
+
+    return crs_write(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
 }
 
 int crs_write_str(MPI_Comm comm,

@@ -48,6 +48,13 @@ int crs_write(MPI_Comm comm,
               MPI_Datatype values_type,
               crs_t *crs);
 
+int crs_write_folder(MPI_Comm comm,
+              const char *folder,
+              MPI_Datatype rowptr_type,
+              MPI_Datatype colidx_type,
+              MPI_Datatype values_type,
+              crs_t *crs);
+
 int crs_write_str(MPI_Comm comm,
                   const char *rowptr_path,
                   const char *colidx_path,
