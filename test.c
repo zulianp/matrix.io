@@ -34,6 +34,8 @@ int main(int argc, char *argv[]) {
         char *data;
         array_read(comm, "data/test/rhs.raw", MPI_FLOAT, (void**)&data, &nlocal, &nglobal);
 
+        array_write(comm, "data/test/dump.raw", MPI_FLOAT, data, nlocal, nglobal);
+
         free(data);
     }
 
