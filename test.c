@@ -1,5 +1,8 @@
-#include <stdio.h>
+#include "matrixio_array.h"
 #include "matrixio_crs.h"
+
+#include <stdio.h>
+#include <stdlib.h> 
 
 int main(int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
@@ -10,16 +13,29 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 
-    crs_t crs;
-    crs_read(comm,
-             "data/test/lhs.rowindex.raw",
-             "data/test/lhs.colindex.raw",
-             "data/test/lhs.value.raw",
-             MPI_LONG,
-             MPI_INT,
-             MPI_FLOAT,
-             &crs);
+    {
+        //Run read crs
+        crs_t crs;
+        crs_read(comm,
+                 "data/test/lhs.rowindex.raw",
+                 "data/test/lhs.colindex.raw",
+                 "data/test/lhs.value.raw",
+                 MPI_LONG,
+                 MPI_INT,
+                 MPI_FLOAT,
+                 &crs);
 
-    crs_free(&crs);
+        crs_free(&crs);
+    }
+
+    {
+        //Run read rhs
+        ptrdiff_t nlocal, nglobal;
+        char *data;
+        array_read(comm, "data/test/rhs.raw", MPI_FLOAT, (void**)&data, &nlocal, &nglobal);
+
+        free(data);
+    }
+
     return MPI_Finalize();
 }

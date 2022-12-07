@@ -3,6 +3,7 @@
 
 #include <mpi.h>
 #include <stddef.h>
+#include <assert.h>
 
 #define CATCH_MPI_ERROR(err)      \
     {                             \
