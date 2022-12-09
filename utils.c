@@ -29,7 +29,16 @@ double to_double(MPI_Datatype type, const char *data) {
         return *((double *)data);
     }
 
+    if (type == MPI_INT) {
+        return *((int *)data);
+    }
+
+    if (type == MPI_LONG) {
+        return *((long *)data);
+    }
+
     // Add missing cases!!?
+    assert(0);
     MPI_Abort(MPI_COMM_WORLD, 1);
     return 666;
 }

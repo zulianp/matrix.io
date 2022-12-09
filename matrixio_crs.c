@@ -216,6 +216,25 @@ int crs_write(MPI_Comm comm,
     return 0;
 }
 
+int crs_read_folder(MPI_Comm comm,
+                    const char *folder,
+                    MPI_Datatype rowptr_type,
+                    MPI_Datatype colidx_type,
+                    MPI_Datatype values_type,
+                    crs_t *crs) {
+    assert(strlen(folder) + 11 < 1024);
+
+    char rowptr_path[1024];
+    char colidx_path[1024];
+    char values_path[1024];
+
+    sprintf(rowptr_path, "%s/rowptr.raw", folder);
+    sprintf(colidx_path, "%s/colidx.raw", folder);
+    sprintf(values_path, "%s/values.raw", folder);
+
+    return crs_read(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
+}
+
 int crs_write_folder(MPI_Comm comm,
                      const char *folder,
                      MPI_Datatype rowptr_type,
