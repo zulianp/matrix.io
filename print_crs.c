@@ -46,25 +46,32 @@ int main(int argc, char *argv[]) {
 
     MPI_Barrier(comm);
 
+    int rowptr_type_size;
+    int colidx_type_size;
+    int values_type_size;
+    CATCH_MPI_ERROR(MPI_Type_size(crs.rowptr_type, &rowptr_type_size));
+    CATCH_MPI_ERROR(MPI_Type_size(crs.colidx_type, &colidx_type_size));
+    CATCH_MPI_ERROR(MPI_Type_size(crs.values_type, &values_type_size));
+
     for (int r = 0; r < size; ++r) {
         if (r == rank) {
             printf("[%d]\n", rank);
             for (ptrdiff_t i = 0; i < crs.lrows; ++i) {
-                ptrdiff_t begin = to_ptrdiff_t(rowptr_type, &crs.rowptr[i * crs.rowptr_type_size]) - crs.start;
-                ptrdiff_t end = to_ptrdiff_t(rowptr_type, &crs.rowptr[(i + 1) * crs.rowptr_type_size]) - crs.start;
+                ptrdiff_t begin = to_ptrdiff_t(rowptr_type, &crs.rowptr[i * rowptr_type_size]) - crs.start;
+                ptrdiff_t end = to_ptrdiff_t(rowptr_type, &crs.rowptr[(i + 1) * rowptr_type_size]) - crs.start;
 
                 printf("row %ld)\n", i);
                 printf("cols: ");
 
                 for (ptrdiff_t k = begin; k < end; k++) {
-                    printf("%ld ", to_ptrdiff_t(colidx_type, &crs.colidx[k * crs.colidx_type_size]));
+                    printf("%ld ", to_ptrdiff_t(colidx_type, &crs.colidx[k * colidx_type_size]));
                 }
 
                 printf("\n");
 
                 printf("vals: ");
                 for (ptrdiff_t k = begin; k < end; k++) {
-                    printf("%g ", to_double(values_type, &crs.values[k * crs.values_type_size]));
+                    printf("%g ", to_double(values_type, &crs.values[k * values_type_size]));
                 }
 
                 printf("\n");

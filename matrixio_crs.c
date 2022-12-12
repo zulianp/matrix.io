@@ -134,23 +134,39 @@ int crs_read(MPI_Comm comm,
     crs->lnnz = nnz;
     crs->start = start;
 
-    crs->rowptr_type_size = rowptr_type_size;
-    crs->colidx_type_size = colidx_type_size;
-    crs->values_type_size = values_type_size;
+    // crs->rowptr_type_size = rowptr_type_size;
+    // crs->colidx_type_size = colidx_type_size;
+    // crs->values_type_size = values_type_size;
+
+    crs->rowptr_type = rowptr_type;
+    crs->colidx_type = colidx_type;
+    crs->values_type = values_type;
     crs->rowoffset = offset;
 
     // printf("[read] grows=%ld nrows=%ld nlocal=%ld\n", (long)crs->grows, (long)nrows, (long)nlocal);
     return 0;
 }
 
-int crs_write(MPI_Comm comm,
-              const char *rowptr_path,
-              const char *colidx_path,
-              const char *values_path,
-              MPI_Datatype rowptr_type,
-              MPI_Datatype colidx_type,
-              MPI_Datatype values_type,
-              crs_t *crs) {
+int crs_read_folder(MPI_Comm comm,
+                    const char *folder,
+                    MPI_Datatype rowptr_type,
+                    MPI_Datatype colidx_type,
+                    MPI_Datatype values_type,
+                    crs_t *crs) {
+    assert(strlen(folder) + 11 < 1024);
+
+    char rowptr_path[1024];
+    char colidx_path[1024];
+    char values_path[1024];
+
+    sprintf(rowptr_path, "%s/rowptr.raw", folder);
+    sprintf(colidx_path, "%s/colidx.raw", folder);
+    sprintf(values_path, "%s/values.raw", folder);
+
+    return crs_read(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
+}
+
+int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, const char *values_path, crs_t *crs) {
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);
@@ -158,6 +174,10 @@ int crs_write(MPI_Comm comm,
 
     MPI_File file;
     MPI_Status status;
+
+    MPI_Datatype rowptr_type = crs->rowptr_type;
+    MPI_Datatype colidx_type = crs->colidx_type;
+    MPI_Datatype values_type = crs->values_type;
 
     int rowptr_type_size = 0;
     int colidx_type_size = 0;
@@ -216,12 +236,7 @@ int crs_write(MPI_Comm comm,
     return 0;
 }
 
-int crs_read_folder(MPI_Comm comm,
-                    const char *folder,
-                    MPI_Datatype rowptr_type,
-                    MPI_Datatype colidx_type,
-                    MPI_Datatype values_type,
-                    crs_t *crs) {
+int crs_write_folder(MPI_Comm comm, const char *folder, crs_t *crs) {
     assert(strlen(folder) + 11 < 1024);
 
     char rowptr_path[1024];
@@ -232,40 +247,7 @@ int crs_read_folder(MPI_Comm comm,
     sprintf(colidx_path, "%s/colidx.raw", folder);
     sprintf(values_path, "%s/values.raw", folder);
 
-    return crs_read(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
-}
-
-int crs_write_folder(MPI_Comm comm,
-                     const char *folder,
-                     MPI_Datatype rowptr_type,
-                     MPI_Datatype colidx_type,
-                     MPI_Datatype values_type,
-                     crs_t *crs) {
-    assert(strlen(folder) + 11 < 1024);
-
-    char rowptr_path[1024];
-    char colidx_path[1024];
-    char values_path[1024];
-
-    sprintf(rowptr_path, "%s/rowptr.raw", folder);
-    sprintf(colidx_path, "%s/colidx.raw", folder);
-    sprintf(values_path, "%s/values.raw", folder);
-
-    return crs_write(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
-}
-
-int crs_write_str(MPI_Comm comm,
-                  const char *rowptr_path,
-                  const char *colidx_path,
-                  const char *values_path,
-                  const char *rowptr_type_str,
-                  const char *colidx_type_str,
-                  const char *values_type_str,
-                  crs_t *crs) {
-    MPI_Datatype rowptr_type = string_to_mpi_datatype(rowptr_type_str);
-    MPI_Datatype colidx_type = string_to_mpi_datatype(colidx_type_str);
-    MPI_Datatype values_type = string_to_mpi_datatype(values_type_str);
-    return crs_write(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
+    return crs_write(comm, rowptr_path, colidx_path, values_path, crs);
 }
 
 int crs_free(crs_t *crs) {

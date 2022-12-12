@@ -29,9 +29,6 @@ int main(int argc, char *argv[]) {
                   "data/test/dump.rowindex.raw",
                   "data/test/dump.colindex.raw",
                   "data/test/dump.value.raw",
-                  MPI_LONG,
-                  MPI_INT,
-                  MPI_FLOAT,
                   &crs);
 
         crs_free(&crs);
@@ -42,9 +39,7 @@ int main(int argc, char *argv[]) {
         ptrdiff_t nlocal, nglobal;
         char *data;
         array_read(comm, "data/test/rhs.raw", MPI_FLOAT, (void **)&data, &nlocal, &nglobal);
-
         array_write(comm, "data/test/dump.raw", MPI_FLOAT, data, nlocal, nglobal);
-
         free(data);
     }
 

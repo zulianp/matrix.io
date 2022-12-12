@@ -85,8 +85,6 @@ int array_write(MPI_Comm comm,
         CATCH_MPI_ERROR(MPI_Exscan(&lnl, &offset, 1, MPI_LONG, MPI_SUM, comm));
     }
 
-    // printf("nbytes=%ld, offset=%ld\n", (long)nbytes, (long)(offset));
-
     CATCH_MPI_ERROR(MPI_File_write_at_all(file, offset * type_size, data, nlocal, type, &status));
 
     CATCH_MPI_ERROR(MPI_File_close(&file));
