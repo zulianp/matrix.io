@@ -6,6 +6,8 @@ else
 	CFLAGS += -pedantic -O3 -DNDEBUG
 endif
 
+CFLAGS += -fPIC
+
 GOALS = test print_crs print_array libmatrix.io.a
 
 MPICC ?= mpicc
