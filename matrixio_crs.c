@@ -183,15 +183,9 @@ int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, c
     int colidx_type_size = 0;
     int values_type_size = 0;
 
-    MPI_Offset rowptr_nbytes = -1;
-    MPI_Offset colidx_nbytes = -1;
-    MPI_Offset values_nbytes = -1;
-
     CATCH_MPI_ERROR(MPI_Type_size(rowptr_type, &rowptr_type_size));
     CATCH_MPI_ERROR(MPI_Type_size(colidx_type, &colidx_type_size));
     CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
-
-    // printf("grows=%ld\n", (long)crs->grows);
 
     {
         // Write rowptr
