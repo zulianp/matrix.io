@@ -8,7 +8,7 @@ endif
 
 GOALS = test print_crs print_array libmatrix.io.a
 
-CC ?= mpicc
+MPICC ?= mpicc
 AR ?= ar
 
 all : $(GOALS)
@@ -17,13 +17,13 @@ libmatrix.io.a : matrixio_crs.o utils.o matrixio_array.o array_dtof.o array_ftod
 	$(AR) r $@ $^ ; \
 
 test : test.o matrixio_crs.o utils.o matrixio_array.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
+	$(MPICC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
 
 print_crs : print_crs.o matrixio_crs.o utils.o matrixio_array.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
+	$(MPICC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
 
 print_array : print_array.o matrixio_crs.o utils.o matrixio_array.o
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
+	$(MPICC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
 
 run_test: test
 	rm  data/test/dump.*.raw
@@ -44,7 +44,7 @@ print_test: run_test
 	od -f   data/test/dump.raw 
 
 %.o : %.c
-	$(CC) $(CFLAGS) -c $<
+	$(MPICC) $(CFLAGS) -c $<
 
 .SUFFIXES :
 .PRECIOUS :
