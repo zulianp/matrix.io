@@ -29,9 +29,14 @@ int main(int argc, char *argv[]) {
         type = string_to_mpi_datatype(argv[2]);
     }
 
+
+    int MATRIXIO_SHOW_PROCESS_RANK = 1;
+    MATRIXIO_READ_ENV(MATRIXIO_SHOW_PROCESS_RANK, atoi);
+
+    int MATRIXIO_PRINT_CSV = 0;
+    MATRIXIO_READ_ENV(MATRIXIO_PRINT_CSV, atoi);
+
     ptrdiff_t max_entries_x_line = 50;
-
-
     ptrdiff_t nlocal, nglobal;
     char *data;
     array_read(comm, argv[1], type, (void **)&data, &nlocal, &nglobal);
@@ -43,15 +48,26 @@ int main(int argc, char *argv[]) {
 
     for (int r = 0; r < size; ++r) {
         if (r == rank) {
-            printf("[%d]\n", rank);
+            if(MATRIXIO_SHOW_PROCESS_RANK) {
+                printf("[%d]\n", rank);
+            }
+
             for (ptrdiff_t i = 0; i < nlocal; ++i) {
                 double v = to_double(type, &data[i * type_size]);
 
-                if((i+1) % max_entries_x_line == 0) {
-                    printf("\n");
+                if(MATRIXIO_PRINT_CSV) {
+                    if(i == nlocal - 1) {
+                        printf("%g ", v);
+                    }else {
+                        printf("%g, ", v);
+                    }
+                } else {
+                    if((i+1) % max_entries_x_line == 0) {
+                        printf("\n");
+                    }
+
+                    printf("%g ", v);
                 }
-                
-                printf("%g ", v);
 
 
             }
