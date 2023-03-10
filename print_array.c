@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     ptrdiff_t max_entries_x_line = 50;
     ptrdiff_t nlocal, nglobal;
     char *data;
-    array_read(comm, argv[1], type, (void **)&data, &nlocal, &nglobal);
+    array_create_from_file(comm, argv[1], type, (void **)&data, &nlocal, &nglobal);
 
     int type_size;
     CATCH_MPI_ERROR(MPI_Type_size(type, &type_size));

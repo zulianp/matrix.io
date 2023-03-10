@@ -6,12 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int array_read(MPI_Comm comm,
-               const char *path,
-               MPI_Datatype type,
-               void **data,
-               ptrdiff_t *out_nlocal,
-               ptrdiff_t *out_nglobal) {
+int array_create_from_file(MPI_Comm comm,
+                           const char *path,
+                           MPI_Datatype type,
+                           void **data,
+                           ptrdiff_t *out_nlocal,
+                           ptrdiff_t *out_nglobal) {
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);
@@ -29,7 +29,7 @@ int array_read(MPI_Comm comm,
     ptrdiff_t n = nbytes / type_size;
     if (n * type_size != nbytes) {
         assert(0);
-        fprintf(stderr, "array_read: Wrong datatype - data pair\n");
+        fprintf(stderr, "array_create_from_file: Wrong datatype - data pair\n");
         return 1;
     }
 
@@ -51,6 +51,38 @@ int array_read(MPI_Comm comm,
 
     *out_nglobal = n;
     *out_nlocal = nlocal;
+    return 0;
+}
+
+int array_read(MPI_Comm comm, const char *path, MPI_Datatype type, void *data, ptrdiff_t nlocal, ptrdiff_t nglobal) {
+    int rank, size;
+
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &size);
+
+    MPI_Status status;
+    MPI_Offset nbytes;
+    MPI_File file;
+    int type_size;
+
+    CATCH_MPI_ERROR(MPI_File_open(comm, path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
+    CATCH_MPI_ERROR(MPI_File_get_size(file, &nbytes));
+    CATCH_MPI_ERROR(MPI_Type_size(type, &type_size));
+
+    ptrdiff_t n = nbytes / type_size;
+    if (n * type_size != nbytes) {
+        assert(0);
+        fprintf(stderr, "array_create_from_file: Wrong datatype - data pair\n");
+        return 1;
+    }
+
+    long offset = 0;
+    long nl = nlocal;
+
+    CATCH_MPI_ERROR(MPI_Exscan(&nl, &offset, 1, MPI_LONG, MPI_SUM, comm));
+
+    CATCH_MPI_ERROR(MPI_File_read_at_all(file, offset * type_size, data, nlocal, type, &status));
+    CATCH_MPI_ERROR(MPI_File_close(&file));
     return 0;
 }
 
