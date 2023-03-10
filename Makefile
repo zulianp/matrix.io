@@ -15,17 +15,19 @@ AR ?= ar
 
 all : $(GOALS)
 
+INCLUDES += -I$(PWD)
+
 libmatrix.io.a : matrixio_crs.o utils.o matrixio_array.o array_dtof.o array_ftod.o
 	$(AR) r $@ $^ ; \
 
-test : test.o matrixio_crs.o utils.o matrixio_array.o
-	$(MPICC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
+test : drivers/test.c matrixio_crs.o utils.o matrixio_array.o
+	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) ; \
 
-print_crs : print_crs.o matrixio_crs.o utils.o matrixio_array.o
-	$(MPICC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
+print_crs : drivers/print_crs.c matrixio_crs.o utils.o matrixio_array.o
+	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) ; \
 
-print_array : print_array.o matrixio_crs.o utils.o matrixio_array.o
-	$(MPICC) $(CFLAGS) -o $@ $^ $(LDFLAGS) ; \
+print_array : drivers/print_array.c matrixio_crs.o utils.o matrixio_array.o
+	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) ; \
 
 run_test: test
 	rm  data/test/dump.*.raw
@@ -46,7 +48,7 @@ print_test: run_test
 	od -f   data/test/dump.raw 
 
 %.o : %.c
-	$(MPICC) $(CFLAGS) -c $<
+	$(MPICC) $(CFLAGS) $(INCLUDES) -c $<
 
 .SUFFIXES :
 .PRECIOUS :
