@@ -4,6 +4,12 @@
 #include <mpi.h>
 #include <stddef.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 typedef struct {
     char *rowptr;
     char *colidx;
@@ -15,10 +21,6 @@ typedef struct {
     ptrdiff_t gnnz;
     ptrdiff_t start;
     ptrdiff_t rowoffset;
-
-    // int rowptr_type_size;
-    // int colidx_type_size;
-    // int values_type_size;
 
     MPI_Datatype rowptr_type;
     MPI_Datatype colidx_type;
@@ -67,5 +69,9 @@ int crs_free(crs_t *crs);
 
 // Memory is managed outside
 int crs_release(crs_t *crs);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MATRIX_IO_CRS_H

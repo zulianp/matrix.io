@@ -6,6 +6,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CATCH_MPI_ERROR(err)      \
     {                             \
         if (err != MPI_SUCCESS) { \
@@ -28,5 +32,10 @@ ptrdiff_t to_ptrdiff_t(MPI_Datatype type, const char *data);
 double to_double(MPI_Datatype type, const char *data);
 
 MPI_Datatype string_to_mpi_datatype(const char *name);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MATRIX_IO_UTILS_H

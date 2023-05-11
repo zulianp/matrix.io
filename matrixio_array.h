@@ -4,6 +4,11 @@
 #include <mpi.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 int array_create_from_file(MPI_Comm comm,
                            const char *path,
                            MPI_Datatype type,
@@ -19,5 +24,11 @@ int array_write(MPI_Comm comm,
                 const void *data,
                 ptrdiff_t nlocal,
                 ptrdiff_t out_nglobal);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif  // MATRIX_IO_ARRAY_H
