@@ -54,7 +54,7 @@ print_test: run_test
 .PRECIOUS :
 
 clean:
-	rm *.o $(GOALS) 
+	rm *.o *.a $(GOALS) 
 
 .SUFFIXES:
 

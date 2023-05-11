@@ -46,7 +46,12 @@ int crs_read(MPI_Comm comm,
 
     if (nrows * rowptr_type_size != rowptr_nbytes) {
         if (!rank) {
-            fprintf(stderr, "[Error] Wrong type specification for rowptr\n");
+            fprintf(stderr,
+                    "[Error] Wrong type specification for rowptr (%ld = %ld / %d) in file %s\n",
+                    (long)nrows,
+                    (long)rowptr_nbytes,
+                    (int)rowptr_type_size,
+                    rowptr_path);
         }
 
         MPI_Abort(comm, 1);
