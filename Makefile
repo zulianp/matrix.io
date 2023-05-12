@@ -6,9 +6,34 @@ else
 	CFLAGS += -pedantic -O3 -DNDEBUG
 endif
 
-CFLAGS += -fPIC
+ifeq ($(parmetis), 1)
+	metis = 1
+	CFLAGS += -I$(PARMETIS_DIR)/include -DMATRIX_IO_ENABLE_PARMETIS
+	CXXFLAGS += -I$(PARMETIS_DIR)/include -DMATRIX_IO_ENABLE_PARMETIS
+	DEPS += -L$(PARMETIS_DIR)/lib -lparmetis
 
-GOALS = test print_crs print_array libmatrix.io.a
+	OBJS += matrixio_parmetis.o
+	GOALS += partition_crs
+endif
+
+ifeq ($(metis), 1)
+	METIS_DIR ?= $(PARMETIS_DIR)/../metis
+	GKLIB_DIR ?= $(PARMETIS_DIR)/../gklib
+
+	CFLAGS += -I$(METIS_DIR)/include -DMATRIX_IO_ENABLE_METIS
+	CXXFLAGS += -I$(METIS_DIR)/include -DMATRIX_IO_ENABLE_METIS
+	
+	DEPS += -L$(METIS_DIR)/lib -lmetis
+	DEPS += -L$(GKLIB_DIR)/lib -lGKlib
+endif
+
+VPATH = graphs
+INCLUDES += -Igraphs
+
+CFLAGS += -fPIC
+OBJS += matrixio_crs.o utils.o matrixio_array.o array_dtof.o array_ftod.o
+
+GOALS += test print_crs print_array libmatrix.io.a 
 
 MPICC ?= mpicc
 AR ?= ar
@@ -17,7 +42,7 @@ all : $(GOALS)
 
 INCLUDES += -I$(PWD)
 
-libmatrix.io.a : matrixio_crs.o utils.o matrixio_array.o array_dtof.o array_ftod.o
+libmatrix.io.a : $(OBJS)
 	$(AR) r $@ $^ ; \
 
 test : drivers/test.c matrixio_crs.o utils.o matrixio_array.o
@@ -25,6 +50,9 @@ test : drivers/test.c matrixio_crs.o utils.o matrixio_array.o
 
 print_crs : drivers/print_crs.c matrixio_crs.o utils.o matrixio_array.o
 	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) ; \
+
+partition_crs: drivers/partition_crs.c libmatrix.io.a
+	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) $(DEPS) ; \
 
 print_array : drivers/print_array.c matrixio_crs.o utils.o matrixio_array.o
 	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) ; \
