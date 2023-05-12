@@ -5,6 +5,6 @@
 
 #include <mpi.h>
 
-int decompose(MPI_Comm comm, crs_t*crs, int*const parts);
+int decompose(MPI_Comm comm, crs_t*crs, const int n_parts, int*const parts);
 
 #endif //MATRIXIO_PARMETIS_H

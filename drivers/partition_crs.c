@@ -28,14 +28,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    int MATRIXIO_DENSE_OUTPUT = 0;
-    MATRIXIO_READ_ENV(MATRIXIO_DENSE_OUTPUT, atoi);
-
-    int MATRIXIO_SHOW_PROCESS_RANK = 1;
-    MATRIXIO_READ_ENV(MATRIXIO_SHOW_PROCESS_RANK, atoi);
-
-    int MATRIXIO_PRINT_CSV = 0;
-    MATRIXIO_READ_ENV(MATRIXIO_PRINT_CSV, atoi);
+    int MATRIXIO_NPARTS = size;
+    MATRIXIO_READ_ENV(MATRIXIO_NPARTS, atoi);
 
     MPI_Datatype rowptr_type = MPI_INT;
     MPI_Datatype colidx_type = MPI_INT;
@@ -57,7 +51,7 @@ int main(int argc, char *argv[]) {
     crs_read(comm, argv[1], argv[2], argv[3], rowptr_type, colidx_type, values_type, &crs);
 
     int *parts = (int *)malloc(crs.lrows * sizeof(int));
-    decompose(comm, &crs, parts);
+    decompose(comm, &crs, MATRIXIO_NPARTS, parts);
 
     array_write(comm, "parts.int32.raw", MPI_INT, parts, crs.lrows, crs.grows);
 

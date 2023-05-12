@@ -7,11 +7,11 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-
+#include <stdio.h>
 
 #define MPI_IDX_T MPI_INT
 
-int decompose(MPI_Comm comm, crs_t*crs, int*const parts) {
+int decompose(MPI_Comm comm, crs_t*crs, const int n_parts, int*const parts) {
 	int rank, size;
 	MPI_Comm_rank(comm, &rank);
 	MPI_Comm_size(comm, &size);
@@ -23,18 +23,35 @@ int decompose(MPI_Comm comm, crs_t*crs, int*const parts) {
 	MPI_Allgather(
 	    &rowoffset, 1, MPI_IDX_T, vtxdist, 1, MPI_IDX_T, comm);
 
+	idx_t last = crs->lrows;
+	MPI_Bcast(
+	    &last,
+	    1,
+	    MPI_IDX_T,
+	    size - 1,
+	    comm);
+
+	vtxdist[size] = vtxdist[size - 1] + last;
+
+
+	if(!rank) {
+		for(int r = 0; r <= size; r++) {
+			printf("%d ", vtxdist[r]);
+		}
+
+		printf("\n");
+	}
 
 	idx_t ncon = 1;
 	idx_t *vwgt = 0;
-	// idx_t* vsize = 0;
 	idx_t *adjwgt = 0;
 	idx_t wgtflag = 0;
 	idx_t numflag = 0;
-	idx_t nparts = size;
+	idx_t nparts = n_parts;
 
-	real_t *tpwgts = (real_t*) malloc(size * sizeof(real_t));
-	for(int r = 0; r < size; r++) {
-		tpwgts[r] = 1./size;
+	real_t *tpwgts = (real_t*) malloc(nparts * ncon * sizeof(real_t));
+	for(int r = 0; r < nparts; r++) {
+		tpwgts[r] = 1./nparts;
 	}
 
 
