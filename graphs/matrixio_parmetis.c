@@ -16,23 +16,32 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 
-    idx_t *vtxdist = (idx_t *)malloc((size + 1) * sizeof(idx_t));
-    // memset(vtxdist, 0, (size + 1) * sizeof(idx_t));
-
-    idx_t rowoffset = crs->rowoffset;
-    MPI_Allgather(&rowoffset, 1, MPI_IDX_T, vtxdist, 1, MPI_IDX_T, comm);
 
     idx_t *rowptr = (idx_t *)crs->rowptr;
+    idx_t *colidx = (idx_t *)crs->colidx;
     const idx_t rstart = rowptr[0];
+    const idx_t rowoffset = crs->rowoffset;
 
-    if (rstart) {
-        for (ptrdiff_t r = 0; r <= crs->lrows; r++) {
-            rowptr[r] -= rstart;
+    idx_t *xadj = (idx_t *)malloc((crs->lrows + 1) * sizeof(idx_t));
+    idx_t *adjncy = (idx_t *)malloc(crs->lnnz * sizeof(idx_t));
+
+    xadj[0] = 0;
+    for (ptrdiff_t r = 0; r < crs->lrows; r++) {
+        const idx_t begin = rowptr[r] - rstart;
+        const idx_t extent = rowptr[r + 1] - rowptr[r];
+        const idx_t *cidx = &colidx[begin];
+
+        xadj[r + 1] = xadj[r];
+        for (idx_t k = 0; k < extent; k++) {
+            if ((rowoffset + r) != cidx[k]) {
+                adjncy[xadj[r + 1]] = cidx[k];
+                xadj[r + 1]++;
+            }
         }
     }
 
-    assert(crs->lnnz == rowptr[crs->lrows]);
-
+    idx_t *vtxdist = (idx_t *)malloc((size + 1) * sizeof(idx_t));
+    MPI_Allgather(&rowoffset, 1, MPI_IDX_T, vtxdist, 1, MPI_IDX_T, comm);
     idx_t last = crs->lrows;
     MPI_Bcast(&last, 1, MPI_IDX_T, size - 1, comm);
 
@@ -77,28 +86,23 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
         MPI_Abort(comm, -1);
     }
 
-    int ret = ParMETIS_V3_PartKway(vtxdist,               // 0
-                                   rowptr,                // 1
-                                   (idx_t *)crs->colidx,  // 2
-                                   vwgt,                  // 3
-                                   adjwgt,                // 4
-                                   &wgtflag,              // 5
-                                   &numflag,              // 6
-                                   &ncon,                 // 7
-                                   &nparts,               // 8
-                                   tpwgts,                // 9
-                                   ubvec,                 // 10
-                                   options,               // 11
-                                   &edgecut,              // 12
-                                   parts,                 // 13
-                                   &comm);                // 14
+    int ret = ParMETIS_V3_PartKway(vtxdist,   // 0
+                                   xadj,      // 1
+                                   adjncy,    // 2
+                                   vwgt,      // 3
+                                   adjwgt,    // 4
+                                   &wgtflag,  // 5
+                                   &numflag,  // 6
+                                   &ncon,     // 7
+                                   &nparts,   // 8
+                                   tpwgts,    // 9
+                                   ubvec,     // 10
+                                   options,   // 11
+                                   &edgecut,  // 12
+                                   parts,     // 13
+                                   &comm);    // 14
 
-    // Undo crs modification
-    if (rstart) {
-        for (ptrdiff_t r = 0; r <= crs->lrows; r++) {
-            rowptr[r] += rstart;
-        }
-    }
-
+    free(xadj);
+    free(adjncy);
     return ret;
 }
