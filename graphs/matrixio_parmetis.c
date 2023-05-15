@@ -22,7 +22,7 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
     idx_t rowoffset = crs->rowoffset;
     MPI_Allgather(&rowoffset, 1, MPI_IDX_T, vtxdist, 1, MPI_IDX_T, comm);
 
-    idx_t * rowptr = (idx_t *)crs->rowptr;
+    idx_t *rowptr = (idx_t *)crs->rowptr;
     const idx_t rstart = rowptr[0];
 
     if (rstart) {
@@ -30,6 +30,8 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
             rowptr[r] -= rstart;
         }
     }
+
+    assert(crs->lnnz == rowptr[crs->lrows]);
 
     idx_t last = crs->lrows;
     MPI_Bcast(&last, 1, MPI_IDX_T, size - 1, comm);
@@ -44,6 +46,8 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
         printf("\n");
     }
 
+    assert(vtxdist[rank + 1] - vtxdist[rank] == crs->lrows);
+
     idx_t ncon = 1;
     idx_t *vwgt = 0;
     idx_t *adjwgt = 0;
@@ -57,7 +61,7 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
     }
 
     real_t ubvec[1] = {1.05};
-    idx_t options[3] = {0};
+    idx_t options[3] = {0, 1, 0};
     idx_t edgecut;
 
     int type_size;
@@ -74,7 +78,7 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
     }
 
     int ret = ParMETIS_V3_PartKway(vtxdist,               // 0
-                                   (idx_t *)crs->rowptr,  // 1
+                                   rowptr,                // 1
                                    (idx_t *)crs->colidx,  // 2
                                    vwgt,                  // 3
                                    adjwgt,                // 4

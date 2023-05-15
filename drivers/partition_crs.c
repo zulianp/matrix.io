@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "matrixio_crs.h"
 #include "matrixio_array.h"
+#include "matrixio_crs.h"
 #include "matrixio_parmetis.h"
 
 #include "matrixio_checks.h"
@@ -55,14 +55,13 @@ int main(int argc, char *argv[]) {
     int err = crs_check_graph(crs.lrows, crs.grows, crs.lnnz, crs.rowptr_type, crs.rowptr, crs.colidx_type, crs.colidx);
     MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_MAX, comm);
 
-    if(err) {
-        if(!rank) {
+    if (err) {
+        if (!rank) {
             printf("crs_check_graph returned error code %d. Aborting...\n", err);
         }
 
         MPI_Abort(comm, 1);
     }
-
 
     int *parts = (int *)malloc(crs.lrows * sizeof(int));
     decompose(comm, &crs, MATRIXIO_NPARTS, parts);

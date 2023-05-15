@@ -65,9 +65,8 @@ int main(int argc, char *argv[]) {
 
     ptrdiff_t nnz = crs.lnnz;
 
-    for(int r = 0; r < size; r++) {
-
-        if(r == rank) {
+    for (int r = 0; r < size; r++) {
+        if (r == rank) {
             printf("[%d] lnnz=%ld\n", rank, nnz);
         }
 
@@ -78,9 +77,7 @@ int main(int argc, char *argv[]) {
     fflush(stdout);
     MPI_Barrier(comm);
 
-
     if (MATRIXIO_DENSE_OUTPUT) {
-        
         ptrdiff_t maxcol = 0;
         for (ptrdiff_t k = 0; k < nnz; k++) {
             ptrdiff_t col = to_ptrdiff_t(colidx_type, &crs.colidx[k * colidx_type_size]);
@@ -108,8 +105,8 @@ int main(int argc, char *argv[]) {
                     }
 
                     for (ptrdiff_t c = 0; c < maxcol; c++) {
-                        if(c + 1 < maxcol) {
-                            printf("%g%s", buff[c], MATRIXIO_PRINT_CSV? "," : " ");
+                        if (c + 1 < maxcol) {
+                            printf("%g%s", buff[c], MATRIXIO_PRINT_CSV ? "," : " ");
                         } else {
                             printf("%g", buff[c]);
                         }
