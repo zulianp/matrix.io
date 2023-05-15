@@ -1,11 +1,22 @@
 ifeq ($(debug),1)
 	CFLAGS += -pedantic -O0 -g
+	CXXFLAGS += -O0 -g
+	CUFLAGS += -O0 -g
 else ifeq ($(prof),1)
-	CFLAGS += -pedantic -O2 -g
+	CFLAGS += -pedantic -O2 -g -DNDEBUG
+	CXXFLAGS += -O2 -g -DNDEBUG
+	CUFLAGS += -O2 -g -DNDEBUG 
+else ifeq ($(asan), 1)
+	ASAN_FLAGS += -fsanitize=address -fno-optimize-sibling-calls -fsanitize-address-use-after-scope -fno-omit-frame-pointer -g 
+	ASAN_FLAGS += -O0
+# 	ASAN_FLAGS += -O1
+	CXXFLAGS += $(ASAN_FLAGS)
+	CFLAGS += -pedantic $(ASAN_FLAGS)
 else
-	CFLAGS += -pedantic -O3 -DNDEBUG
+	CFLAGS += -Ofast -DNDEBUG
+	CXXFLAGS += -Ofast -DNDEBUG
+	CUFLAGS += -O3 -DNDEBUG 
 endif
-
 ifeq ($(parmetis), 1)
 	metis = 1
 	CFLAGS += -I$(PARMETIS_DIR)/include -DMATRIX_IO_ENABLE_PARMETIS
@@ -27,14 +38,16 @@ ifeq ($(metis), 1)
 	DEPS += -L$(GKLIB_DIR)/lib -lGKlib
 endif
 
-VPATH = graphs
-INCLUDES += -Igraphs
+VPATH = graphs:checks
+INCLUDES += -Igraphs -Ichecks
+DEPS += -lm
 
 CFLAGS += -fPIC
-OBJS += matrixio_crs.o utils.o matrixio_array.o array_dtof.o array_ftod.o
+OBJS += matrixio_crs.o utils.o matrixio_array.o array_dtof.o array_ftod.o matrixio_checks.o
 
 GOALS += test print_crs print_array libmatrix.io.a 
 
+MPICXX ?= mpicxx
 MPICC ?= mpicc
 AR ?= ar
 
@@ -56,6 +69,9 @@ partition_crs: drivers/partition_crs.c libmatrix.io.a
 
 print_array : drivers/print_array.c matrixio_crs.o utils.o matrixio_array.o
 	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) ; \
+
+matrixio_checks.o : matrixio_checks.cpp
+	$(MPICXX) $(CXXFLAGS) $(INCLUDES) $(INTERNAL_CXXFLAGS) -c $<
 
 run_test: test
 	rm  data/test/dump.*.raw

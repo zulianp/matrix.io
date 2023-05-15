@@ -63,11 +63,25 @@ int main(int argc, char *argv[]) {
     CATCH_MPI_ERROR(MPI_Type_size(crs.colidx_type, &colidx_type_size));
     CATCH_MPI_ERROR(MPI_Type_size(crs.values_type, &values_type_size));
 
+    ptrdiff_t nnz = crs.lnnz;
+
+    for(int r = 0; r < size; r++) {
+
+        if(r == rank) {
+            printf("[%d] lnnz=%ld\n", rank, nnz);
+        }
+
+        fflush(stdout);
+        MPI_Barrier(comm);
+    }
+
+    fflush(stdout);
+    MPI_Barrier(comm);
+
 
     if (MATRIXIO_DENSE_OUTPUT) {
-        ptrdiff_t nnz = to_ptrdiff_t(rowptr_type, &crs.rowptr[crs.lrows * rowptr_type_size]);
+        
         ptrdiff_t maxcol = 0;
-
         for (ptrdiff_t k = 0; k < nnz; k++) {
             ptrdiff_t col = to_ptrdiff_t(colidx_type, &crs.colidx[k * colidx_type_size]);
             maxcol = MAX(col, maxcol);
@@ -104,6 +118,9 @@ int main(int argc, char *argv[]) {
                     printf("\n");
                 }
             }
+
+            fflush(stdout);
+            MPI_Barrier(comm);
         }
     } else {
         for (int r = 0; r < size; ++r) {
