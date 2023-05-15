@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
                     ptrdiff_t begin = to_ptrdiff_t(rowptr_type, &crs.rowptr[i * rowptr_type_size]) - crs.start;
                     ptrdiff_t end = to_ptrdiff_t(rowptr_type, &crs.rowptr[(i + 1) * rowptr_type_size]) - crs.start;
 
-                    printf("row %ld)\n", i);
+                    printf("row %ld)\n", crs.rowoffset + i);
                     printf("cols: ");
 
                     for (ptrdiff_t k = begin; k < end; k++) {
