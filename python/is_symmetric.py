@@ -11,6 +11,7 @@ real_t = np.float64
 
 def main(argv):
 	if len(argv) != 3:
+		# print(argv)
 		print(f'usage: {argv[0]} <crs_folder> <check_data>')
 		exit(1)
 
@@ -29,7 +30,11 @@ def main(argv):
 
 	A = sp.sparse.csr_matrix((data, colidx, rowptr), shape=(N, N)) 
 	D = A.T - A
-	print(D.data)
+
+	nnz = np.sum(np.abs(D.data))
+
+	print(f'sum(abs(A.T - A)) = {nnz}')
+	# print(D.data)
 
 if __name__ == '__main__':
 	main(sys.argv)

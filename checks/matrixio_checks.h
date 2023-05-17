@@ -1,12 +1,12 @@
 #ifndef MATRIXIO_CHECK_H
 #define MATRIXIO_CHECK_H
 
+#include <mpi.h>
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <mpi.h>
-#include <stddef.h>
 
 /**
  * @brief Checks the integrity of a compressed row storage (CRS) graph represented by its row pointer and column index
