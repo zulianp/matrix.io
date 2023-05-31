@@ -27,6 +27,8 @@ ifeq ($(parmetis), 1)
 	GOALS += partition_crs
 endif
 
+CXXFLAGS += -std=c++14
+
 ifeq ($(metis), 1)
 	METIS_DIR ?= $(PARMETIS_DIR)/../metis
 	GKLIB_DIR ?= $(PARMETIS_DIR)/../gklib
@@ -38,14 +40,15 @@ ifeq ($(metis), 1)
 	DEPS += -L$(GKLIB_DIR)/lib -lGKlib
 endif
 
-VPATH = graphs:checks
-INCLUDES += -Igraphs -Ichecks
+VPATH = graphs:checks:sorting
+INCLUDES += -Igraphs -Ichecks -Isorting
 DEPS += -lm
 
 CFLAGS += -fPIC
 OBJS += matrixio_crs.o utils.o matrixio_array.o array_dtof.o array_ftod.o matrixio_checks.o
+OBJS += sorting.o
 
-GOALS += test print_crs print_array libmatrix.io.a 
+GOALS += test print_crs print_array reorder_crs libmatrix.io.a 
 
 MPICXX ?= mpicxx
 MPICC ?= mpicc
@@ -67,8 +70,14 @@ print_crs : drivers/print_crs.c matrixio_crs.o utils.o matrixio_array.o
 partition_crs: drivers/partition_crs.c libmatrix.io.a
 	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) $(DEPS) ; \
 
+reorder_crs: drivers/reorder_crs.c libmatrix.io.a
+	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) $(DEPS) ; \
+
 print_array : drivers/print_array.c matrixio_crs.o utils.o matrixio_array.o
 	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS) ; \
+
+sorting.o : sorting.cpp
+	$(MPICXX) $(CXXFLAGS) $(INCLUDES) $(INTERNAL_CXXFLAGS) -c $< \
 
 matrixio_checks.o : matrixio_checks.cpp
 	$(MPICXX) $(CXXFLAGS) $(INCLUDES) $(INTERNAL_CXXFLAGS) -c $<

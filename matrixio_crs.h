@@ -9,6 +9,10 @@
 extern "C" {
 #endif
 
+// typedef struct {
+
+// } crs_graph_t;
+
 
 typedef struct {
     char *rowptr;
@@ -26,6 +30,8 @@ typedef struct {
     MPI_Datatype colidx_type;
     MPI_Datatype values_type;
 } crs_t;
+
+int crs_alloc_same(const crs_t *const tpl, crs_t *result);
 
 int crs_read(MPI_Comm comm,
              const char *rowptr_path,

@@ -7,6 +7,34 @@
 #include <stdlib.h>
 #include <string.h>
 
+int crs_alloc_same(const crs_t *const tpl, crs_t *result)
+{
+    result->grows = tpl->grows;
+    result->lrows = tpl->lrows;
+    result->lnnz = tpl->lnnz;
+    result->gnnz = tpl->gnnz;
+    result->start = tpl->start;
+    result->rowoffset = tpl->rowoffset;
+
+    result->rowptr_type = tpl->rowptr_type;
+    result->colidx_type = tpl->colidx_type;
+    result->values_type = tpl->values_type;
+
+    int rowptr_type_size = 0;
+    CATCH_MPI_ERROR(MPI_Type_size(tpl->rowptr_type, &rowptr_type_size));
+
+    int colidx_type_size = 0;
+    CATCH_MPI_ERROR(MPI_Type_size(tpl->colidx_type, &colidx_type_size));
+
+    int values_type_size = 0;
+    CATCH_MPI_ERROR(MPI_Type_size(tpl->values_type, &values_type_size));
+    
+    result->rowptr = malloc(tpl->lrows * rowptr_type_size);
+    result->colidx = malloc(tpl->lnnz * colidx_type_size);
+    result->values = malloc(tpl->lnnz * values_type_size);
+    return 0;
+}
+
 int crs_read_str(MPI_Comm comm,
                  const char *rowptr_path,
                  const char *colidx_path,
