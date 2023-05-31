@@ -13,8 +13,8 @@ extern "C" {
 #define CATCH_MPI_ERROR(err)                                 \
     {                                                        \
         if (err != MPI_SUCCESS) {                            \
-            char string_buff[4052];                          \
-            int resultlen = 4052;                            \
+            char string_buff[4096];                          \
+            int resultlen = 4096;                            \
             MPI_Error_string(err, string_buff, &resultlen);  \
             fprintf(stderr, "MPI error: %s\n", string_buff); \
             assert(0);                                       \
