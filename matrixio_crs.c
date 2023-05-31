@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_PATH_LENGTH 4096
+
 int crs_alloc_same(const crs_t *const tpl, crs_t *result) {
     result->grows = tpl->grows;
     result->lrows = tpl->lrows;
@@ -325,11 +327,11 @@ int crs_read_folder(MPI_Comm comm,
                     MPI_Datatype colidx_type,
                     MPI_Datatype values_type,
                     crs_t *crs) {
-    assert(strlen(folder) + 11 < 1024);
+    assert(strlen(folder) + 11 < MAX_PATH_LENGTH);
 
-    char rowptr_path[1024];
-    char colidx_path[1024];
-    char values_path[1024];
+    char rowptr_path[MAX_PATH_LENGTH];
+    char colidx_path[MAX_PATH_LENGTH];
+    char values_path[MAX_PATH_LENGTH];
 
     sprintf(rowptr_path, "%s/rowptr.raw", folder);
     sprintf(colidx_path, "%s/colidx.raw", folder);
@@ -441,7 +443,7 @@ int block_crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_p
 
     CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
 
-    char path[4096];
+    char path[MAX_PATH_LENGTH];
     for(int b = 0; b < crs->block_size; b++)
     {
         sprintf(path, values_format, b);
@@ -460,11 +462,11 @@ int block_crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_p
 }
 
 int crs_write_folder(MPI_Comm comm, const char *folder, crs_t *crs) {
-    assert(strlen(folder) + 11 < 1024);
+    assert(strlen(folder) + 11 < MAX_PATH_LENGTH);
 
-    char rowptr_path[1024];
-    char colidx_path[1024];
-    char values_path[1024];
+    char rowptr_path[MAX_PATH_LENGTH];
+    char colidx_path[MAX_PATH_LENGTH];
+    char values_path[MAX_PATH_LENGTH];
 
     sprintf(rowptr_path, "%s/rowptr.raw", folder);
     sprintf(colidx_path, "%s/colidx.raw", folder);
@@ -520,3 +522,6 @@ int crs_graph_release(crs_graph_t *const crs) {
     crs->rowoffset = 0;
     return 0;
 }
+
+#undef MAX_PATH_LENGTH
+
