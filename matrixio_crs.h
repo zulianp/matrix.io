@@ -126,6 +126,11 @@ int block_crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_p
 int crs_write_folder(MPI_Comm comm, const char *folder, crs_t *crs);
 
 int crs_graph_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, crs_graph_t *crs);
+int crs_graph_write_values(MPI_Comm comm,
+                           const crs_graph_t *const crs,
+                           const char *values_path,
+                           MPI_Datatype values_type,
+                           matrixio_byte_t *const values);
 
 /// Free memory
 int crs_free(crs_t *const crs);

@@ -218,8 +218,7 @@ int crs_graph_view_from_crs(crs_t *const crs, crs_graph_t *const graph) {
     return 0;
 }
 
-int crs_graph_view_from_block_crs(block_crs_t *const crs, crs_graph_t *const graph)
-{
+int crs_graph_view_from_block_crs(block_crs_t *const crs, crs_graph_t *const graph) {
     graph->rowptr = crs->rowptr;
     graph->colidx = crs->colidx;
 
@@ -389,7 +388,11 @@ int crs_graph_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_p
     return 0;
 }
 
-int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, const char *values_path, crs_t *crs) {
+int crs_graph_write_values(MPI_Comm comm,
+                           const crs_graph_t *const crs,
+                           const char *values_path,
+                           MPI_Datatype values_type,
+                           matrixio_byte_t *const values) {
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);
@@ -398,66 +401,45 @@ int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, c
     MPI_File file;
     MPI_Status status;
 
-    MPI_Datatype values_type = crs->values_type;
     int values_type_size = 0;
-
-    crs_graph_t graph;
-    crs_graph_view_from_crs(crs, &graph);
-    crs_graph_write(comm, rowptr_path, colidx_path, &graph);
-    crs_graph_release(&graph);
-
     CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
 
-    {
-        // Write values
-        CATCH_MPI_ERROR(MPI_File_open(comm, values_path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
+    CATCH_MPI_ERROR(MPI_File_open(comm, values_path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
 
-        MPI_File_set_size(file, crs->gnnz * values_type_size);
+    MPI_File_set_size(file, crs->gnnz * values_type_size);
 
-        CATCH_MPI_ERROR(
-            MPI_File_write_at_all(file, crs->start * values_type_size, crs->values, crs->lnnz, values_type, &status));
+    CATCH_MPI_ERROR(
+        MPI_File_write_at_all(file, crs->start * values_type_size, values, crs->lnnz, values_type, &status));
 
-        CATCH_MPI_ERROR(MPI_File_close(&file));
-    }
-
+    CATCH_MPI_ERROR(MPI_File_close(&file));
     return 0;
 }
 
-int block_crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, const char *values_format, block_crs_t *crs)
-{
-    int rank, size;
+int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, const char *values_path, crs_t *crs) {
+    crs_graph_t graph;
+    crs_graph_view_from_crs(crs, &graph);
+    crs_graph_write(comm, rowptr_path, colidx_path, &graph);
+    crs_graph_write_values(comm, &graph, values_path, crs->values_type, crs->values);
+    crs_graph_release(&graph);
+    return 0;
+}
 
-    MPI_Comm_rank(comm, &rank);
-    MPI_Comm_size(comm, &size);
-
-    MPI_File file;
-    MPI_Status status;
-
-    MPI_Datatype values_type = crs->values_type;
-    int values_type_size = 0;
-
+int block_crs_write(MPI_Comm comm,
+                    const char *rowptr_path,
+                    const char *colidx_path,
+                    const char *values_format,
+                    block_crs_t *crs) {
     crs_graph_t graph;
     crs_graph_view_from_block_crs(crs, &graph);
     crs_graph_write(comm, rowptr_path, colidx_path, &graph);
-    crs_graph_release(&graph);
-
-    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
-
+    
     char path[MAX_PATH_LENGTH];
-    for(int b = 0; b < crs->block_size; b++)
-    {
+    for (int b = 0; b < crs->block_size; b++) {
         sprintf(path, values_format, b);
-        // Write values
-        CATCH_MPI_ERROR(MPI_File_open(comm, path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
-
-        MPI_File_set_size(file, crs->gnnz * values_type_size);
-
-        CATCH_MPI_ERROR(
-            MPI_File_write_at_all(file, crs->start * values_type_size, crs->values[b], crs->lnnz, values_type, &status));
-
-        CATCH_MPI_ERROR(MPI_File_close(&file));
+        crs_graph_write_values(comm, &graph, path, crs->values_type, crs->values[b]);
     }
 
+    crs_graph_release(&graph);
     return 0;
 }
 
@@ -524,4 +506,3 @@ int crs_graph_release(crs_graph_t *const crs) {
 }
 
 #undef MAX_PATH_LENGTH
-
