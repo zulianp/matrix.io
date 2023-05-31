@@ -10,15 +10,16 @@
 extern "C" {
 #endif
 
-#define CATCH_MPI_ERROR(err)                                \
-    {                                                       \
-        if (err != MPI_SUCCESS) {                           \
-            char string_buff[4052];                         \
-            int resultlen = 4052;                           \
-            MPI_Error_string(err, string_buff, &resultlen); \
-            fprintf(stderr, "MPI error: %s\n", string_buff);        \
-            assert(0);                                      \
-        }                                                   \
+#define CATCH_MPI_ERROR(err)                                 \
+    {                                                        \
+        if (err != MPI_SUCCESS) {                            \
+            char string_buff[4052];                          \
+            int resultlen = 4052;                            \
+            MPI_Error_string(err, string_buff, &resultlen);  \
+            fprintf(stderr, "MPI error: %s\n", string_buff); \
+            assert(0);                                       \
+            MPI_Abort(MPI_COMM_WORLD, -1);                       \
+        }                                                    \
     }
 
 #define MATRIXIO_READ_ENV(name, conversion) \
