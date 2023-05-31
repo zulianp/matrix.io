@@ -16,6 +16,11 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 
+    int MATRIXIO_DECOMPOSE_WEIGHTED = 0;
+    MATRIXIO_READ_ENV(MATRIXIO_DECOMPOSE_WEIGHTED, atoi);
+
+    float MATRIXIO_DECOMPOSE_WEIGHT = 1;
+    MATRIXIO_READ_ENV(MATRIXIO_DECOMPOSE_WEIGHT, atof);
 
     idx_t *rowptr = (idx_t *)crs->rowptr;
     idx_t *colidx = (idx_t *)crs->colidx;
@@ -86,6 +91,27 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
         MPI_Abort(comm, -1);
     }
 
+    if (MATRIXIO_DECOMPOSE_WEIGHTED) {
+        wgtflag = 2;
+        vwgt = (idx_t *)malloc(crs->lrows * sizeof(idx_t));
+
+        for (ptrdiff_t r = 0; r < crs->lrows; r++) {
+            vwgt[r] = xadj[r + 1] - xadj[r];
+        }
+
+        if (MATRIXIO_DECOMPOSE_WEIGHT != 1.f) {
+            idx_t max_weight = 0;
+            for (ptrdiff_t r = 0; r < crs->lrows; r++) {
+                max_weight = MAX(max_weight, vwgt[r]);
+            }
+
+            for (ptrdiff_t r = 0; r < crs->lrows; r++) {
+                vwgt[r] *= (MATRIXIO_DECOMPOSE_WEIGHT / max_weight);
+                vwgt[r] = MAX(vwgt[r], 1);
+            }
+        }
+    }
+
     int ret = ParMETIS_V3_PartKway(vtxdist,   // 0
                                    xadj,      // 1
                                    adjncy,    // 2
@@ -104,5 +130,10 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
 
     free(xadj);
     free(adjncy);
+
+    if (MATRIXIO_DECOMPOSE_WEIGHTED) {
+        free(vwgt);
+    }
+
     return ret;
 }
