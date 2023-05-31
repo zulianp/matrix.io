@@ -3,12 +3,12 @@
 #include "utils.h"
 
 #include <assert.h>
+#include <glob.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int crs_alloc_same(const crs_t *const tpl, crs_t *result)
-{
+int crs_alloc_same(const crs_t *const tpl, crs_t *result) {
     result->grows = tpl->grows;
     result->lrows = tpl->lrows;
     result->lnnz = tpl->lnnz;
@@ -28,7 +28,7 @@ int crs_alloc_same(const crs_t *const tpl, crs_t *result)
 
     int values_type_size = 0;
     CATCH_MPI_ERROR(MPI_Type_size(tpl->values_type, &values_type_size));
-    
+
     result->rowptr = malloc(tpl->lrows * rowptr_type_size);
     result->colidx = malloc(tpl->lnnz * colidx_type_size);
     result->values = malloc(tpl->lnnz * values_type_size);
@@ -49,14 +49,12 @@ int crs_read_str(MPI_Comm comm,
     return crs_read(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
 }
 
-int crs_read(MPI_Comm comm,
-             const char *rowptr_path,
-             const char *colidx_path,
-             const char *values_path,
-             MPI_Datatype rowptr_type,
-             MPI_Datatype colidx_type,
-             MPI_Datatype values_type,
-             crs_t *crs) {
+int crs_graph_read(MPI_Comm comm,
+                   const char *rowptr_path,
+                   const char *colidx_path,
+                   MPI_Datatype rowptr_type,
+                   MPI_Datatype colidx_type,
+                   crs_graph_t *crs) {
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);
@@ -140,26 +138,12 @@ int crs_read(MPI_Comm comm,
     CATCH_MPI_ERROR(MPI_File_close(&file));
 
     ///////////////////////////////////////////////////////
-    // Read values
-    ///////////////////////////////////////////////////////
-
-    int values_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
-    char *values = (char *)malloc(nnz * values_type_size);
-
-    CATCH_MPI_ERROR(MPI_File_open(comm, values_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
-
-    CATCH_MPI_ERROR(MPI_File_read_at_all(file, start * values_type_size, values, nnz, values_type, &status));
-
-    CATCH_MPI_ERROR(MPI_File_close(&file));
-
-    ///////////////////////////////////////////////////////
 
     // MPI_Barrier(comm);
 
     crs->rowptr = rowptr;
     crs->colidx = colidx;
-    crs->values = values;
+    // crs->values = values;
 
     crs->grows = nrows;
     crs->lrows = nlocal;
@@ -167,16 +151,171 @@ int crs_read(MPI_Comm comm,
     crs->lnnz = nnz;
     crs->start = start;
 
-    // crs->rowptr_type_size = rowptr_type_size;
-    // crs->colidx_type_size = colidx_type_size;
-    // crs->values_type_size = values_type_size;
-
     crs->rowptr_type = rowptr_type;
     crs->colidx_type = colidx_type;
-    crs->values_type = values_type;
     crs->rowoffset = offset;
 
-    // printf("[read] grows=%ld nrows=%ld nlocal=%ld\n", (long)crs->grows, (long)nrows, (long)nlocal);
+    return 0;
+}
+
+int crs_graph_read_values(MPI_Comm comm,
+                          const crs_graph_t *const crs,
+                          const char *values_path,
+                          MPI_Datatype values_type,
+                          matrixio_byte_t *const values) {
+    ///////////////////////////////////////////////////////
+    // Read values
+    ///////////////////////////////////////////////////////
+
+    MPI_File file;
+    MPI_Status status;
+
+    int values_type_size = 0;
+    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+
+    CATCH_MPI_ERROR(MPI_File_open(comm, values_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
+
+    CATCH_MPI_ERROR(MPI_File_read_at_all(file, crs->start * values_type_size, values, crs->lnnz, values_type, &status));
+
+    CATCH_MPI_ERROR(MPI_File_close(&file));
+    return 0;
+}
+
+int crs_graph_to_crs(crs_graph_t *const graph, crs_t *const crs) {
+    crs->rowptr = graph->rowptr;
+    crs->colidx = graph->colidx;
+
+    crs->grows = graph->grows;
+    crs->lrows = graph->lrows;
+    crs->lnnz = graph->lnnz;
+    crs->gnnz = graph->gnnz;
+    crs->start = graph->start;
+    crs->rowoffset = graph->rowoffset;
+
+    crs->rowptr_type = graph->rowptr_type;
+    crs->colidx_type = graph->colidx_type;
+
+    // Make graph invalid
+    crs_graph_release(graph);
+    return 0;
+}
+
+int crs_graph_view_from_crs(crs_t *const crs, crs_graph_t *const graph) {
+    graph->rowptr = crs->rowptr;
+    graph->colidx = crs->colidx;
+
+    graph->grows = crs->grows;
+    graph->lrows = crs->lrows;
+    graph->lnnz = crs->lnnz;
+    graph->gnnz = crs->gnnz;
+    graph->start = crs->start;
+    graph->rowoffset = crs->rowoffset;
+
+    graph->rowptr_type = crs->rowptr_type;
+    graph->colidx_type = crs->colidx_type;
+    return 0;
+}
+
+int crs_graph_view_from_block_crs(block_crs_t *const crs, crs_graph_t *const graph)
+{
+    graph->rowptr = crs->rowptr;
+    graph->colidx = crs->colidx;
+
+    graph->grows = crs->grows;
+    graph->lrows = crs->lrows;
+    graph->lnnz = crs->lnnz;
+    graph->gnnz = crs->gnnz;
+    graph->start = crs->start;
+    graph->rowoffset = crs->rowoffset;
+
+    graph->rowptr_type = crs->rowptr_type;
+    graph->colidx_type = crs->colidx_type;
+    return 0;
+}
+
+int crs_graph_to_block_crs(crs_graph_t *const graph, block_crs_t *const crs) {
+    crs->rowptr = graph->rowptr;
+    crs->colidx = graph->colidx;
+
+    crs->grows = graph->grows;
+    crs->lrows = graph->lrows;
+    crs->lnnz = graph->lnnz;
+    crs->gnnz = graph->gnnz;
+    crs->start = graph->start;
+    crs->rowoffset = graph->rowoffset;
+
+    crs->rowptr_type = graph->rowptr_type;
+    crs->colidx_type = graph->colidx_type;
+
+    // Make graph invalid
+    crs_graph_release(graph);
+    return 0;
+}
+
+int crs_read(MPI_Comm comm,
+             const char *rowptr_path,
+             const char *colidx_path,
+             const char *values_path,
+             MPI_Datatype rowptr_type,
+             MPI_Datatype colidx_type,
+             MPI_Datatype values_type,
+             crs_t *crs) {
+    crs_graph_t graph;
+    crs_graph_read(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, &graph);
+
+    int values_type_size = 0;
+    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+    char *values = (char *)malloc(graph.lnnz * values_type_size);
+
+    crs_graph_read_values(comm, &graph, values_path, values_type, values);
+    crs_graph_to_crs(&graph, crs);
+
+    crs->values = values;
+    crs->values_type = values_type;
+    return 0;
+}
+
+int block_crs_read(MPI_Comm comm,
+                   const char *rowptr_path,
+                   const char *colidx_path,
+                   const char *values_pattern,
+                   MPI_Datatype rowptr_type,
+                   MPI_Datatype colidx_type,
+                   MPI_Datatype values_type,
+                   block_crs_t *crs) {
+    crs_graph_t graph;
+    crs_graph_read(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, &graph);
+    int values_type_size = 0;
+    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+
+    int block_size = 0;
+    matrixio_byte_t **values;
+    {
+        glob_t gl;
+        glob(values_pattern, GLOB_MARK, NULL, &gl);
+        block_size = gl.gl_pathc;
+
+        printf("block_size (%d):\n", block_size);
+        for (int k = 0; k < block_size; k++) {
+            printf("%s\n", gl.gl_pathv[k]);
+        }
+
+        values = (matrixio_byte_t **)malloc(block_size * sizeof(matrixio_byte_t *));
+
+        for (int k = 0; k < block_size; k++) {
+            matrixio_byte_t *v = (matrixio_byte_t *)malloc(graph.lnnz * values_type_size);
+            crs_graph_read_values(comm, &graph, gl.gl_pathv[k], values_type, v);
+            values[k] = v;
+        }
+
+        globfree(&gl);
+    }
+
+    crs_graph_to_block_crs(&graph, crs);
+
+    crs->values = values;
+    crs->values_type = values_type;
+    crs->block_size = block_size;
     return 0;
 }
 
@@ -199,7 +338,7 @@ int crs_read_folder(MPI_Comm comm,
     return crs_read(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
 }
 
-int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, const char *values_path, crs_t *crs) {
+int crs_graph_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, crs_graph_t *crs) {
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);
@@ -210,15 +349,12 @@ int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, c
 
     MPI_Datatype rowptr_type = crs->rowptr_type;
     MPI_Datatype colidx_type = crs->colidx_type;
-    MPI_Datatype values_type = crs->values_type;
 
     int rowptr_type_size = 0;
     int colidx_type_size = 0;
-    int values_type_size = 0;
 
     CATCH_MPI_ERROR(MPI_Type_size(rowptr_type, &rowptr_type_size));
     CATCH_MPI_ERROR(MPI_Type_size(colidx_type, &colidx_type_size));
-    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
 
     {
         // Write rowptr
@@ -248,6 +384,28 @@ int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, c
         CATCH_MPI_ERROR(MPI_File_close(&file));
     }
 
+    return 0;
+}
+
+int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, const char *values_path, crs_t *crs) {
+    int rank, size;
+
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &size);
+
+    MPI_File file;
+    MPI_Status status;
+
+    MPI_Datatype values_type = crs->values_type;
+    int values_type_size = 0;
+
+    crs_graph_t graph;
+    crs_graph_view_from_crs(crs, &graph);
+    crs_graph_write(comm, rowptr_path, colidx_path, &graph);
+    crs_graph_release(&graph);
+
+    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+
     {
         // Write values
         CATCH_MPI_ERROR(MPI_File_open(comm, values_path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
@@ -256,6 +414,44 @@ int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, c
 
         CATCH_MPI_ERROR(
             MPI_File_write_at_all(file, crs->start * values_type_size, crs->values, crs->lnnz, values_type, &status));
+
+        CATCH_MPI_ERROR(MPI_File_close(&file));
+    }
+
+    return 0;
+}
+
+int block_crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, const char *values_format, block_crs_t *crs)
+{
+    int rank, size;
+
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &size);
+
+    MPI_File file;
+    MPI_Status status;
+
+    MPI_Datatype values_type = crs->values_type;
+    int values_type_size = 0;
+
+    crs_graph_t graph;
+    crs_graph_view_from_block_crs(crs, &graph);
+    crs_graph_write(comm, rowptr_path, colidx_path, &graph);
+    crs_graph_release(&graph);
+
+    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+
+    char path[4096];
+    for(int b = 0; b < crs->block_size; b++)
+    {
+        sprintf(path, values_format, b);
+        // Write values
+        CATCH_MPI_ERROR(MPI_File_open(comm, path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
+
+        MPI_File_set_size(file, crs->gnnz * values_type_size);
+
+        CATCH_MPI_ERROR(
+            MPI_File_write_at_all(file, crs->start * values_type_size, crs->values[b], crs->lnnz, values_type, &status));
 
         CATCH_MPI_ERROR(MPI_File_close(&file));
     }
@@ -277,7 +473,7 @@ int crs_write_folder(MPI_Comm comm, const char *folder, crs_t *crs) {
     return crs_write(comm, rowptr_path, colidx_path, values_path, crs);
 }
 
-int crs_free(crs_t *crs) {
+int crs_free(crs_t *const crs) {
     free(crs->rowptr);
     free(crs->colidx);
     free(crs->values);
@@ -289,10 +485,34 @@ int crs_free(crs_t *crs) {
     return 0;
 }
 
-int crs_release(crs_t *crs) {
+int crs_release(crs_t *const crs) {
     crs->rowptr = 0;
     crs->colidx = 0;
     crs->values = 0;
+    crs->lrows = 0;
+    crs->grows = 0;
+    crs->lnnz = 0;
+    crs->start = 0;
+    crs->rowoffset = 0;
+    return 0;
+}
+
+int crs_graph_free(crs_graph_t *const crs) {
+    free(crs->rowptr);
+    free(crs->colidx);
+
+    crs->lrows = 0;
+    crs->grows = 0;
+    crs->lnnz = 0;
+    crs->start = 0;
+    crs->rowoffset = 0;
+    return 0;
+}
+
+int crs_graph_release(crs_graph_t *const crs) {
+    crs->rowptr = 0;
+    crs->colidx = 0;
+
     crs->lrows = 0;
     crs->grows = 0;
     crs->lnnz = 0;
