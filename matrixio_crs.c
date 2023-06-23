@@ -141,11 +141,8 @@ int crs_graph_read(MPI_Comm comm,
 
     ///////////////////////////////////////////////////////
 
-    // MPI_Barrier(comm);
-
     crs->rowptr = rowptr;
     crs->colidx = colidx;
-    // crs->values = values;
 
     crs->grows = nrows;
     crs->lrows = nlocal;
@@ -466,6 +463,25 @@ int crs_free(crs_t *const crs) {
     crs->lnnz = 0;
     crs->start = 0;
     crs->rowoffset = 0;
+    return 0;
+}
+
+int block_crs_free(block_crs_t *const crs)
+{
+    free(crs->rowptr);
+    free(crs->colidx);
+
+    for(int b = 0; b < crs->block_size; b++) {
+        free(crs->values[b]);
+    }
+
+    free(crs->values);
+    crs->lrows = 0;
+    crs->grows = 0;
+    crs->lnnz = 0;
+    crs->start = 0;
+    crs->rowoffset = 0;
+    crs->block_size = 0;
     return 0;
 }
 

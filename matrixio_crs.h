@@ -134,6 +134,7 @@ int crs_graph_write_values(MPI_Comm comm,
 
 /// Free memory
 int crs_free(crs_t *const crs);
+int block_crs_free(block_crs_t *const crs);
 
 // Memory is managed outside
 int crs_release(crs_t *const crs);
