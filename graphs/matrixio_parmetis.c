@@ -11,7 +11,11 @@
 
 #define MPI_IDX_T MPI_INT
 
-int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
+
+
+
+int crs_graph_decompose(MPI_Comm comm, crs_graph_t*crs, const int n_parts, int*const parts)
+{
     int rank, size;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
@@ -135,5 +139,14 @@ int decompose(MPI_Comm comm, crs_t *crs, const int n_parts, int *const parts) {
         free(vwgt);
     }
 
+    return ret;
+}
+
+int crs_decompose(MPI_Comm comm, crs_t*crs, const int n_parts, int*const parts)
+{
+    crs_graph_t crs_graph;
+    crs_graph_view_from_crs(crs, &crs_graph);
+    int ret = crs_graph_decompose(comm, &crs_graph, n_parts, parts);
+    crs_graph_release(&crs_graph);
     return ret;
 }

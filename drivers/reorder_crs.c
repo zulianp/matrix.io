@@ -181,6 +181,9 @@ int main(int argc, char *argv[]) {
 
     array_write(comm, "reorder_mapping.raw", MPI_LONG, mapping, crs.lrows, crs.grows);
 
+    // FIXME
+    array_write(comm, "parallel_layout.raw", MPI_LONG, part_ptr, size+1, size+1);
+
     {
         // Clean-up
         crs_free(&crs);

@@ -27,7 +27,7 @@ ifeq ($(parmetis), 1)
 	GOALS += partition_crs
 endif
 
-CXXFLAGS += -std=c++14
+CXXFLAGS += -std=c++14 -fPIC
 
 ifeq ($(metis), 1)
 	METIS_DIR ?= $(PARMETIS_DIR)/../metis

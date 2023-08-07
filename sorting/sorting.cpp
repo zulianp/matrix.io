@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <algorithm>
+#include <cstring>
 
 template <typename KeyType>
 inline static void local_argsort_impl(ptrdiff_t size, const KeyType *keys, ptrdiff_t *idx) {

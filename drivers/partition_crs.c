@@ -19,11 +19,10 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 
-    if (argc < 4) {
+    if (argc < 3 || argc > 5) {
         if (!rank) {
             fprintf(stderr,
-                    "usage: %s <rowptr.raw> <colidx.raw> <values.raw> [rowptr_type=int] [colidx_type=int] "
-                    "[values_type=float]",
+                    "usage: %s <rowptr.raw> <colidx.raw> [rowptr_type=int] [colidx_type=int]",
                     argv[0]);
         }
 
@@ -35,22 +34,17 @@ int main(int argc, char *argv[]) {
 
     MPI_Datatype rowptr_type = MPI_INT;
     MPI_Datatype colidx_type = MPI_INT;
-    MPI_Datatype values_type = MPI_FLOAT;
+
+    if (argc > 3) {
+        rowptr_type = string_to_mpi_datatype(argv[3]);
+    }
 
     if (argc > 4) {
-        rowptr_type = string_to_mpi_datatype(argv[4]);
+        colidx_type = string_to_mpi_datatype(argv[4]);
     }
 
-    if (argc > 5) {
-        colidx_type = string_to_mpi_datatype(argv[5]);
-    }
-
-    if (argc > 6) {
-        values_type = string_to_mpi_datatype(argv[6]);
-    }
-
-    crs_t crs;
-    crs_read(comm, argv[1], argv[2], argv[3], rowptr_type, colidx_type, values_type, &crs);
+    crs_graph_t crs;
+    crs_graph_read(comm, argv[1], argv[2], rowptr_type, colidx_type, &crs);
 
     int err = crs_check_graph(crs.lrows, crs.grows, crs.lnnz, crs.rowptr_type, crs.rowptr, crs.colidx_type, crs.colidx);
     MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_MAX, comm);
@@ -64,10 +58,9 @@ int main(int argc, char *argv[]) {
     }
 
     int *parts = (int *)malloc(crs.lrows * sizeof(int));
-    decompose(comm, &crs, MATRIXIO_NPARTS, parts);
-
+    crs_graph_decompose(comm, &crs, MATRIXIO_NPARTS, parts);
     array_write(comm, "parts.int32.raw", MPI_INT, parts, crs.lrows, crs.grows);
 
-    crs_free(&crs);
+    crs_graph_free(&crs);
     return MPI_Finalize();
 }
