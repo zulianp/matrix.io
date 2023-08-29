@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
         char *data;
         array_create_from_file(comm, "data/test/rhs.raw", MPI_FLOAT, (void **)&data, &nlocal, &nglobal);
         array_write(comm, "data/test/dump.raw", MPI_FLOAT, data, nlocal, nglobal);
+        array_write_segmented(comm, "data/test/dump_seg.raw", MPI_FLOAT, data, 2, nlocal, nglobal);
         free(data);
     }
 
