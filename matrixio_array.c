@@ -198,7 +198,7 @@ int array_write(MPI_Comm comm,
                 ptrdiff_t nglobal) {
     if(nglobal >= (ptrdiff_t)INT_MAX) {
         // Comunication free fallback by exploiting global information
-        array_write_segmented(comm, path, type, data, INT_MAX, nlocal, nglobal);
+        return array_write_segmented(comm, path, type, data, INT_MAX, nlocal, nglobal);
     }
 
     int rank, size;
