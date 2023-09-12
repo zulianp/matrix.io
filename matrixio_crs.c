@@ -291,6 +291,15 @@ int crs_read(MPI_Comm comm,
     int MATRIXIO_CRS_READ_BLOCK_SIZE = 1;
     MATRIXIO_READ_ENV(MATRIXIO_CRS_READ_BLOCK_SIZE, atoi);
 
+    if(MATRIXIO_CRS_READ_BLOCK_SIZE != 1) {
+        int rank;
+        MPI_Comm_rank(comm, &rank);
+        if(!rank) {
+            printf("MATRIXIO_CRS_READ_BLOCK_SIZE=%d\n", MATRIXIO_CRS_READ_BLOCK_SIZE);
+            fflush(stdout);
+        }
+    }
+
     return crs_read_AoS_block(comm,
                               rowptr_path,
                               colidx_path,
