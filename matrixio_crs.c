@@ -112,7 +112,7 @@ int crs_graph_read_AoS_block(MPI_Comm comm,
     ///////////////////////////////////////////////////////
 
     ptrdiff_t offset = rank * uniform_split;
-    offset += MIN(rank, remainder);
+    offset += MIN(rank * block_size, remainder);
 
     char *rowptr = (char *)malloc((nlocal + 1) * rowptr_type_size);
 
