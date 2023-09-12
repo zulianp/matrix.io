@@ -93,6 +93,16 @@ int crs_read(MPI_Comm comm,
              MPI_Datatype values_type,
              crs_t *crs);
 
+int crs_read_AoS_block(MPI_Comm comm,
+                       const char *rowptr_path,
+                       const char *colidx_path,
+                       const char *values_path,
+                       MPI_Datatype rowptr_type,
+                       MPI_Datatype colidx_type,
+                       MPI_Datatype values_type,
+                       const int block_size,
+                       crs_t *crs);
+
 int block_crs_read(MPI_Comm comm,
                    const char *rowptr_path,
                    const char *colidx_path,

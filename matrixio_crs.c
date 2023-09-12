@@ -51,12 +51,13 @@ int crs_read_str(MPI_Comm comm,
     return crs_read(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
 }
 
-int crs_graph_read(MPI_Comm comm,
-                   const char *rowptr_path,
-                   const char *colidx_path,
-                   MPI_Datatype rowptr_type,
-                   MPI_Datatype colidx_type,
-                   crs_graph_t *crs) {
+int crs_graph_read_AoS_block(MPI_Comm comm,
+                             const char *rowptr_path,
+                             const char *colidx_path,
+                             MPI_Datatype rowptr_type,
+                             MPI_Datatype colidx_type,
+                             int block_size,
+                             crs_graph_t *crs) {
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);
@@ -89,13 +90,19 @@ int crs_graph_read(MPI_Comm comm,
     nrows -= 1;
     crs->grows = nrows;
 
-    ptrdiff_t uniform_split = nrows / size;
+    ptrdiff_t uniform_split = block_size * (nrows / (size * block_size));
     ptrdiff_t nlocal = uniform_split;
     ptrdiff_t remainder = nrows - nlocal * size;
 
-    if (remainder > rank) {
-        nlocal += 1;
+    if (remainder * block_size > rank) {
+        nlocal += block_size;
     }
+
+#ifndef NDEBUG
+    long ntotal = nlocal;
+    MPI_Allreduce(MPI_IN_PLACE, &ntotal, 1, MPI_LONG, MPI_SUM, comm);
+    assert(ntotal == nrows);
+#endif
 
     ///////////////////////////////////////////////////////
 
@@ -155,6 +162,15 @@ int crs_graph_read(MPI_Comm comm,
     crs->rowoffset = offset;
 
     return 0;
+}
+
+int crs_graph_read(MPI_Comm comm,
+                   const char *rowptr_path,
+                   const char *colidx_path,
+                   MPI_Datatype rowptr_type,
+                   MPI_Datatype colidx_type,
+                   crs_graph_t *crs) {
+    return crs_graph_read_AoS_block(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, 1, crs);
 }
 
 int crs_graph_read_values(MPI_Comm comm,
@@ -258,8 +274,45 @@ int crs_read(MPI_Comm comm,
              MPI_Datatype colidx_type,
              MPI_Datatype values_type,
              crs_t *crs) {
+    // crs_graph_t graph;
+    // crs_graph_read(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, &graph);
+
+    // int values_type_size = 0;
+    // CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+    // char *values = (char *)malloc(graph.lnnz * values_type_size);
+
+    // crs_graph_read_values(comm, &graph, values_path, values_type, values);
+    // crs_graph_to_crs(&graph, crs);
+
+    // crs->values = values;
+    // crs->values_type = values_type;
+    // return 0;
+
+    int MATRIXIO_CRS_READ_BLOCK_SIZE = 1;
+    MATRIXIO_READ_ENV(MATRIXIO_CRS_READ_BLOCK_SIZE, atoi);
+
+    return crs_read_AoS_block(comm,
+                              rowptr_path,
+                              colidx_path,
+                              values_path,
+                              rowptr_type,
+                              colidx_type,
+                              values_type,
+                              MATRIXIO_CRS_READ_BLOCK_SIZE,
+                              crs);
+}
+
+int crs_read_AoS_block(MPI_Comm comm,
+                       const char *rowptr_path,
+                       const char *colidx_path,
+                       const char *values_path,
+                       MPI_Datatype rowptr_type,
+                       MPI_Datatype colidx_type,
+                       MPI_Datatype values_type,
+                       const int block_size,
+                       crs_t *crs) {
     crs_graph_t graph;
-    crs_graph_read(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, &graph);
+    crs_graph_read_AoS_block(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, block_size, &graph);
 
     int values_type_size = 0;
     CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
@@ -429,7 +482,7 @@ int block_crs_write(MPI_Comm comm,
     crs_graph_t graph;
     crs_graph_view_from_block_crs(crs, &graph);
     crs_graph_write(comm, rowptr_path, colidx_path, &graph);
-    
+
     char path[MAX_PATH_LENGTH];
     for (int b = 0; b < crs->block_size; b++) {
         sprintf(path, values_format, b);
@@ -466,12 +519,11 @@ int crs_free(crs_t *const crs) {
     return 0;
 }
 
-int block_crs_free(block_crs_t *const crs)
-{
+int block_crs_free(block_crs_t *const crs) {
     free(crs->rowptr);
     free(crs->colidx);
 
-    for(int b = 0; b < crs->block_size; b++) {
+    for (int b = 0; b < crs->block_size; b++) {
         free(crs->values[b]);
     }
 
