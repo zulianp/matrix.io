@@ -94,14 +94,19 @@ int crs_graph_read_AoS_block(MPI_Comm comm,
     ptrdiff_t nlocal = uniform_split;
     ptrdiff_t remainder = nrows - nlocal * size;
 
-    if (remainder * block_size > rank) {
+    if (remainder > rank * block_size) {
         nlocal += block_size;
     }
 
 #ifndef NDEBUG
     long ntotal = nlocal;
     MPI_Allreduce(MPI_IN_PLACE, &ntotal, 1, MPI_LONG, MPI_SUM, comm);
+    if(ntotal != nrows) {
+        printf("ntotal != nrows, %ld != %ld!\n", ntotal, nrows);    
+        fflush(stdout);
+    }
     assert(ntotal == nrows);
+    
 #endif
 
     ///////////////////////////////////////////////////////
