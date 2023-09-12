@@ -274,19 +274,32 @@ int crs_read(MPI_Comm comm,
              MPI_Datatype colidx_type,
              MPI_Datatype values_type,
              crs_t *crs) {
-    crs_graph_t graph;
-    crs_graph_read(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, &graph);
+    // crs_graph_t graph;
+    // crs_graph_read(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, &graph);
 
-    int values_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
-    char *values = (char *)malloc(graph.lnnz * values_type_size);
+    // int values_type_size = 0;
+    // CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+    // char *values = (char *)malloc(graph.lnnz * values_type_size);
 
-    crs_graph_read_values(comm, &graph, values_path, values_type, values);
-    crs_graph_to_crs(&graph, crs);
+    // crs_graph_read_values(comm, &graph, values_path, values_type, values);
+    // crs_graph_to_crs(&graph, crs);
 
-    crs->values = values;
-    crs->values_type = values_type;
-    return 0;
+    // crs->values = values;
+    // crs->values_type = values_type;
+    // return 0;
+
+    int MATRIXIO_CRS_READ_BLOCK_SIZE = 1;
+    MATRIXIO_READ_ENV(MATRIXIO_CRS_READ_BLOCK_SIZE, atoi);
+
+    return crs_read_AoS_block(comm,
+                              rowptr_path,
+                              colidx_path,
+                              values_path,
+                              rowptr_type,
+                              colidx_type,
+                              values_type,
+                              MATRIXIO_CRS_READ_BLOCK_SIZE,
+                              crs);
 }
 
 int crs_read_AoS_block(MPI_Comm comm,
