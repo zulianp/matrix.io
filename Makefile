@@ -45,7 +45,7 @@ INCLUDES += -Igraphs -Ichecks -Isorting
 DEPS += -lm
 
 CFLAGS += -fPIC
-OBJS += matrixio_crs.o utils.o matrixio_array.o array_dtof.o array_ftod.o matrixio_checks.o
+OBJS += matrixio_crs.o utils.o matrixio_array.o matrixio_ndarray.o array_dtof.o array_ftod.o matrixio_checks.o
 OBJS += sorting.o
 
 GOALS += test print_crs print_array reorder_crs libmatrix.io.a 
