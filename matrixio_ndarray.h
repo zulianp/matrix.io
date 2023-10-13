@@ -1,5 +1,5 @@
-#ifndef MATRIX_IO_ARRAY_H
-#define MATRIX_IO_ARRAY_H
+#ifndef MATRIX_IO_ND_ARRAY_H
+#define MATRIX_IO_ND_ARRAY_H
 
 #include <mpi.h>
 #include <stddef.h>
@@ -46,4 +46,4 @@ int ndarray_write_segmented(MPI_Comm comm,
 }
 #endif
 
-#endif  // MATRIX_IO_ARRAY_H
+#endif  // MATRIX_IO_ND_ARRAY_H
