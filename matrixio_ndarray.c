@@ -62,11 +62,13 @@ int ndarray_read_segmented(MPI_Comm comm,
     ptrdiff_t nlast = nglobal[ndims - 1];
     ptrdiff_t nlast_uniform_split = nlast / size;
     ptrdiff_t nlast_local = nlast_uniform_split;
-    ptrdiff_t nlast_remainder = ntotal - nlast_local * size;
+    ptrdiff_t nlast_remainder = nlast - nlast_local * size;
 
     if (nlast_remainder > rank) {
         nlast_local += 1;
     }
+
+    assert(size != 1 || nlast_local == nlast);
 
     for (int d = 0; d < ndims - 1; d++) {
         nlocal[d] = nglobal[d];
