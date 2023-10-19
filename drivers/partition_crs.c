@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+// #include <unistd.h> // sleep
+
 
 #include "matrixio_array.h"
 #include "matrixio_crs.h"
@@ -9,6 +11,7 @@
 #include "matrixio_checks.h"
 
 #include "utils.h"
+
 
 int main(int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
@@ -42,6 +45,8 @@ int main(int argc, char *argv[]) {
     if (argc > 4) {
         colidx_type = string_to_mpi_datatype(argv[4]);
     }
+
+    // sleep(2);
 
     crs_graph_t crs;
     crs_graph_read(comm, argv[1], argv[2], rowptr_type, colidx_type, &crs);
