@@ -244,7 +244,7 @@ int array_range_select(
         recv_count[r] = MAX(0, bmax - bmin);
 
         // From which offset process r needs to send data to this rank
-        recv_displs[r] = parts[r] - bmin;
+        recv_displs[r] = bmin - parts[r];
     }
 
     int* send_count = malloc(size * sizeof(int));
@@ -258,15 +258,51 @@ int array_range_select(
         recv_displs[r] += recv_displs[r - 1] + recv_count[r - 1];
     }
 
+    if (0) {
+
+        for (int r = 0; r < size; r++) {
+            MPI_Barrier(comm);
+
+            if (r == rank) {
+                printf("\n-----------------\n");
+                printf("[%d]\n", rank);
+                printf("\nsend_counts:\n");
+                for (int i = 0; i < size; i++) {
+                    printf("%d ", send_count[i]);
+                }
+
+                printf("\nsend_displs:\n");
+                for (int i = 0; i < size; i++) {
+                    printf("%d ", send_displs[i]);
+                }
+
+                printf("\nrecv_counts:\n");
+                for (int i = 0; i < size; i++) {
+                    printf("%d ", recv_count[i]);
+                }
+
+                printf("\nrecv_displs:\n");
+                for (int i = 0; i < size; i++) {
+                    printf("%d ", recv_displs[i]);
+                }
+
+                printf("\n-----------------\n");
+            }
+
+            fflush(stdout);
+            MPI_Barrier(comm);
+        }
+    }
+
     CATCH_MPI_ERROR(MPI_Alltoallv(in,
-                                  send_count,
-                                  send_displs,
-                                  type,
-                                  out,
-                                  recv_count,
-                                  recv_displs,
-                                  type,
-                                  comm));
+        send_count,
+        send_displs,
+        type,
+        out,
+        recv_count,
+        recv_displs,
+        type,
+        comm));
 
     free(parts);
     free(send_count);
