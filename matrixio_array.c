@@ -3,26 +3,28 @@
 #include "utils.h"
 
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 
 int array_create_from_file(MPI_Comm comm,
-                           const char *path,
-                           MPI_Datatype type,
-                           void **data,
-                           ptrdiff_t *out_nlocal,
-                           ptrdiff_t *out_nglobal) {
+    const char* path,
+    MPI_Datatype type,
+    void** data,
+    ptrdiff_t* out_nlocal,
+    ptrdiff_t* out_nglobal)
+{
     return array_create_from_file_segmented(comm, path, type, data, INT_MAX, out_nlocal, out_nglobal);
 }
 
 int array_create_from_file_segmented(MPI_Comm comm,
-                           const char *path,
-                           MPI_Datatype type,
-                           void **data,
-                           const int segment_size,
-                           ptrdiff_t *out_nlocal,
-                           ptrdiff_t *out_nglobal) {
+    const char* path,
+    MPI_Datatype type,
+    void** data,
+    const int segment_size,
+    ptrdiff_t* out_nlocal,
+    ptrdiff_t* out_nglobal)
+{
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);
@@ -61,12 +63,12 @@ int array_create_from_file_segmented(MPI_Comm comm,
     nrounds += nrounds * ((ptrdiff_t)segment_size) < nlocal;
     CATCH_MPI_ERROR(MPI_Exscan(MPI_IN_PLACE, &nrounds, 1, MPI_INT, MPI_MAX, comm));
 
-    for(int i = 0; i < nrounds; i++) {
+    for (int i = 0; i < nrounds; i++) {
         int segment_size_i = MIN(segment_size, nlocal - i * ((ptrdiff_t)segment_size));
         ptrdiff_t data_offset = i * ((ptrdiff_t)segment_size) * type_size;
         MPI_Offset byte_offset_i = (offset + i * segment_size) * type_size;
 
-        CATCH_MPI_ERROR(MPI_File_read_at_all(file, byte_offset_i, &((char *)*data)[data_offset], segment_size_i, type, &status));
+        CATCH_MPI_ERROR(MPI_File_read_at_all(file, byte_offset_i, &((char*)*data)[data_offset], segment_size_i, type, &status));
     }
 
     CATCH_MPI_ERROR(MPI_File_close(&file));
@@ -76,11 +78,13 @@ int array_create_from_file_segmented(MPI_Comm comm,
     return 0;
 }
 
-int array_read(MPI_Comm comm, const char *path, MPI_Datatype type, void *data, ptrdiff_t nlocal, ptrdiff_t nglobal) {
+int array_read(MPI_Comm comm, const char* path, MPI_Datatype type, void* data, ptrdiff_t nlocal, ptrdiff_t nglobal)
+{
     return array_read_segmented(comm, path, type, data, INT_MAX, nlocal, nglobal);
 }
 
-int array_read_segmented(MPI_Comm comm, const char *path, MPI_Datatype type, void *data, int segment_size, ptrdiff_t nlocal, ptrdiff_t nglobal) {
+int array_read_segmented(MPI_Comm comm, const char* path, MPI_Datatype type, void* data, int segment_size, ptrdiff_t nlocal, ptrdiff_t nglobal)
+{
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);
@@ -111,9 +115,9 @@ int array_read_segmented(MPI_Comm comm, const char *path, MPI_Datatype type, voi
     CATCH_MPI_ERROR(MPI_Exscan(&nl, &offset, 1, MPI_LONG, MPI_SUM, comm));
     CATCH_MPI_ERROR(MPI_Exscan(MPI_IN_PLACE, &nrounds, 1, MPI_INT, MPI_MAX, comm));
 
-    for(int i = 0; i < nrounds; i++) {
+    for (int i = 0; i < nrounds; i++) {
         int segment_size_i = MIN(segment_size, nlocal - i * ((ptrdiff_t)segment_size));
-        CATCH_MPI_ERROR(MPI_File_read_at_all(file, (offset + i * segment_size) * type_size, &((char *)data)[i * ((ptrdiff_t)segment_size) * type_size], segment_size_i, type, &status));
+        CATCH_MPI_ERROR(MPI_File_read_at_all(file, (offset + i * segment_size) * type_size, &((char*)data)[i * ((ptrdiff_t)segment_size) * type_size], segment_size_i, type, &status));
     }
 
     CATCH_MPI_ERROR(MPI_File_close(&file));
@@ -121,12 +125,13 @@ int array_read_segmented(MPI_Comm comm, const char *path, MPI_Datatype type, voi
 }
 
 int array_write(MPI_Comm comm,
-                const char *path,
-                MPI_Datatype type,
-                const void *data,
-                ptrdiff_t nlocal,
-                ptrdiff_t nglobal) {
-    if(nglobal >= (ptrdiff_t)INT_MAX) {
+    const char* path,
+    MPI_Datatype type,
+    const void* data,
+    ptrdiff_t nlocal,
+    ptrdiff_t nglobal)
+{
+    if (nglobal >= (ptrdiff_t)INT_MAX) {
         // Comunication free fallback by exploiting global information
         return array_write_segmented(comm, path, type, data, INT_MAX, nlocal, nglobal);
     }
@@ -164,12 +169,12 @@ int array_write(MPI_Comm comm,
 }
 
 int array_write_segmented(MPI_Comm comm,
-                const char *path,
-                MPI_Datatype type,
-                const void *data,
-                const int segment_size,
-                ptrdiff_t nlocal,
-                ptrdiff_t nglobal)
+    const char* path,
+    MPI_Datatype type,
+    const void* data,
+    const int segment_size,
+    ptrdiff_t nlocal,
+    ptrdiff_t nglobal)
 {
     int rank, size;
 
@@ -200,13 +205,73 @@ int array_write_segmented(MPI_Comm comm,
         CATCH_MPI_ERROR(MPI_Exscan(MPI_IN_PLACE, &nrounds, 1, MPI_INT, MPI_MAX, comm));
     }
 
-    for(int i = 0; i < nrounds; i++) {
+    for (int i = 0; i < nrounds; i++) {
         int segment_size_i = MIN(segment_size, nlocal - i * ((ptrdiff_t)segment_size));
-        CATCH_MPI_ERROR(MPI_File_write_at_all(file, (offset + i * segment_size) * type_size, &((char *)data)[i * ((ptrdiff_t)segment_size) * type_size], segment_size_i, type, &status));
+        CATCH_MPI_ERROR(MPI_File_write_at_all(file, (offset + i * segment_size) * type_size, &((char*)data)[i * ((ptrdiff_t)segment_size) * type_size], segment_size_i, type, &status));
     }
-        
+
     CATCH_MPI_ERROR(MPI_File_close(&file));
     return 0;
 }
 
+int array_range_select(
+    MPI_Comm comm,
+    MPI_Datatype type,
+    void* in,
+    void* out,
+    ptrdiff_t in_nlocal,
+    ptrdiff_t range_start,
+    ptrdiff_t range_end)
+{
+    int rank, size;
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &size);
 
+    long* parts = calloc(size + 1, sizeof(long));
+    parts[rank + 1] = in_nlocal;
+    CATCH_MPI_ERROR(MPI_Allreduce(MPI_IN_PLACE, &parts[1], size, MPI_LONG, MPI_SUM, comm));
+
+    for (int r = 1; r < size; r++) {
+        parts[r + 1] += parts[r];
+    }
+
+    int* recv_count = calloc(size, sizeof(int));
+    int* recv_displs = malloc(size * sizeof(int));
+
+    for (int r = 0; r < size; r++) {
+        ptrdiff_t bmin = MAX(parts[r], range_start);
+        ptrdiff_t bmax = MIN(parts[r + 1], range_end);
+        recv_count[r] = MAX(0, bmax - bmin);
+
+        // From which offset process r needs to send data to this rank
+        recv_displs[r] = parts[r] - bmin;
+    }
+
+    int* send_count = malloc(size * sizeof(int));
+    CATCH_MPI_ERROR(MPI_Alltoall(recv_count, 1, MPI_INT, send_count, 1, MPI_INT, comm));
+
+    int* send_displs = malloc(size * sizeof(int));
+    CATCH_MPI_ERROR(MPI_Alltoall(recv_displs, 1, MPI_INT, send_displs, 1, MPI_INT, comm));
+
+    recv_displs[0] = 0;
+    for (int r = 1; r < size; r++) {
+        recv_displs[r] += recv_displs[r - 1] + recv_count[r - 1];
+    }
+
+    CATCH_MPI_ERROR(MPI_Alltoallv(in,
+                                  send_count,
+                                  send_displs,
+                                  type,
+                                  out,
+                                  recv_count,
+                                  recv_displs,
+                                  type,
+                                  comm));
+
+    free(parts);
+    free(send_count);
+    free(send_displs);
+    free(recv_count);
+    free(recv_displs);
+    return 0;
+}

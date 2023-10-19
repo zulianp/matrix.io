@@ -48,6 +48,15 @@ int array_write_segmented(MPI_Comm comm,
                           ptrdiff_t nlocal,
                           ptrdiff_t nglobal);
 
+int array_range_select(
+    MPI_Comm comm,
+    MPI_Datatype type,
+    void* in,
+    void* out,
+    ptrdiff_t in_nlocal,
+    ptrdiff_t range_start,
+    ptrdiff_t range_end);
+
 #ifdef __cplusplus
 }
 #endif
