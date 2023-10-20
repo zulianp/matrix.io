@@ -227,6 +227,9 @@ int array_range_select(
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 
+    // int type_size;
+    // CATCH_MPI_ERROR(MPI_Type_size(type, &type_size));
+
     long* parts = calloc(size + 1, sizeof(long));
     parts[rank + 1] = in_nlocal;
     CATCH_MPI_ERROR(MPI_Allreduce(MPI_IN_PLACE, &parts[1], size, MPI_LONG, MPI_SUM, comm));
@@ -255,17 +258,24 @@ int array_range_select(
 
     recv_displs[0] = 0;
     for (int r = 1; r < size; r++) {
-        recv_displs[r] += recv_displs[r - 1] + recv_count[r - 1];
+        recv_displs[r] = recv_displs[r - 1] + recv_count[r - 1];
     }
 
     if (0) {
-
         for (int r = 0; r < size; r++) {
             MPI_Barrier(comm);
 
             if (r == rank) {
+                if(rank == 0) {
+                printf("\n-----------------\n");
+                    for(int i = 0; i < size + 1; i++) {
+                        printf("%ld ", parts[i]);
+                    }
+                }
+
                 printf("\n-----------------\n");
                 printf("[%d]\n", rank);
+                printf("[%ld, %ld) size = %ld\n", range_start, range_end, range_end - range_start);
                 printf("\nsend_counts:\n");
                 for (int i = 0; i < size; i++) {
                     printf("%d ", send_count[i]);
@@ -294,7 +304,8 @@ int array_range_select(
         }
     }
 
-    CATCH_MPI_ERROR(MPI_Alltoallv(in,
+    CATCH_MPI_ERROR(MPI_Alltoallv(
+        in,
         send_count,
         send_displs,
         type,
