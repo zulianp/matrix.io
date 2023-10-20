@@ -51,8 +51,8 @@ int array_write_segmented(MPI_Comm comm,
 int array_range_select(
     MPI_Comm comm,
     MPI_Datatype type,
-    void* in,
-    void* out,
+    void* const in,
+    void* const out,
     ptrdiff_t in_nlocal,
     ptrdiff_t range_start,
     ptrdiff_t range_end);

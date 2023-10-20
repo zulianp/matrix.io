@@ -217,8 +217,8 @@ int array_write_segmented(MPI_Comm comm,
 int array_range_select(
     MPI_Comm comm,
     MPI_Datatype type,
-    void* in,
-    void* out,
+    void* const in,
+    void* const out,
     ptrdiff_t in_nlocal,
     ptrdiff_t range_start,
     ptrdiff_t range_end)
@@ -226,10 +226,7 @@ int array_range_select(
     int rank, size;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
-
-    // int type_size;
-    // CATCH_MPI_ERROR(MPI_Type_size(type, &type_size));
-
+    
     long* parts = calloc(size + 1, sizeof(long));
     parts[rank + 1] = in_nlocal;
     CATCH_MPI_ERROR(MPI_Allreduce(MPI_IN_PLACE, &parts[1], size, MPI_LONG, MPI_SUM, comm));
