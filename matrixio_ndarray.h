@@ -8,11 +8,11 @@
 extern "C" {
 #endif
 
-int ndarray_read(MPI_Comm comm,
+int ndarray_create_from_file(MPI_Comm comm,
                  const char *path,
                  MPI_Datatype type,
                  int ndims,
-                 void *data,
+                 void **data_ptr,
                  ptrdiff_t *const nlocal,
                  const ptrdiff_t *const nglobal);
 
@@ -24,11 +24,11 @@ int ndarray_write(MPI_Comm comm,
                   const ptrdiff_t *const nlocal,
                   const ptrdiff_t *const nglobal);
 
-int ndarray_read_segmented(MPI_Comm comm,
+int ndarray_create_from_file_segmented(MPI_Comm comm,
                            const char *path,
                            MPI_Datatype type,
                            int ndims,
-                           void *data,
+                           void **data_ptr,
                            int segment_size,
                            ptrdiff_t *const nlocal,
                            const ptrdiff_t *const nglobal);

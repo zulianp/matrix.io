@@ -7,21 +7,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int ndarray_read(MPI_Comm comm,
+int ndarray_create_from_file(MPI_Comm comm,
                  const char *path,
                  MPI_Datatype type,
                  int ndims,
-                 void *data,
+                 void **data_ptr,
                  ptrdiff_t *const nlocal,
                  const ptrdiff_t *const nglobal) {
-    return ndarray_read_segmented(comm, path, type, ndims, data, INT_MAX, nlocal, nglobal);
+    return ndarray_create_from_file_segmented(comm, path, type, ndims, data_ptr, INT_MAX, nlocal, nglobal);
 }
 
-int ndarray_read_segmented(MPI_Comm comm,
+int ndarray_create_from_file_segmented(MPI_Comm comm,
                            const char *path,
                            MPI_Datatype type,
                            int ndims,
-                           void *data,
+                           void **data_ptr,
                            int segment_size,
                            ptrdiff_t *const nlocal,
                            const ptrdiff_t *const nglobal) {
@@ -80,6 +80,8 @@ int ndarray_read_segmented(MPI_Comm comm,
     long offset = 0;
     long nl = nlast_local * stride;
 
+    void *data = malloc(nl * type_size);
+
     int nrounds = nl / segment_size;
     nrounds += nrounds * ((ptrdiff_t)segment_size) < nl;
 
@@ -97,6 +99,8 @@ int ndarray_read_segmented(MPI_Comm comm,
     }
 
     CATCH_MPI_ERROR(MPI_File_close(&file));
+
+    *data_ptr = data;
     return 0;
 }
 
