@@ -81,6 +81,8 @@ int crs_graph_read_AoS_block(MPI_Comm comm,
                     (long)rowptr_nbytes,
                     (int)rowptr_type_size,
                     rowptr_path);
+
+            fflush(stderr);
         }
 
         MPI_Abort(comm, 1);

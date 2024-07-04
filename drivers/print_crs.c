@@ -35,6 +35,9 @@ int main(int argc, char *argv[]) {
     int MATRIXIO_PRINT_CSV = 0;
     MATRIXIO_READ_ENV(MATRIXIO_PRINT_CSV, atoi);
 
+    // int MATRIXIO_SKIP_ZEROS = 0;
+    // MATRIXIO_READ_ENV(MATRIXIO_SKIP_ZEROS, atoi);
+
     MPI_Datatype rowptr_type = MPI_INT;
     MPI_Datatype colidx_type = MPI_INT;
     MPI_Datatype values_type = MPI_FLOAT;
