@@ -17,8 +17,9 @@ extern "C" {
             int resultlen = 4096;                            \
             MPI_Error_string(err, string_buff, &resultlen);  \
             fprintf(stderr, "MPI error: %s\n", string_buff); \
+            fflush(stderr);                                   \
             assert(0);                                       \
-            MPI_Abort(MPI_COMM_WORLD, -1);                       \
+            MPI_Abort(MPI_COMM_WORLD, -1);                   \
         }                                                    \
     }
 

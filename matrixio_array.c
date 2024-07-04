@@ -43,6 +43,7 @@ int array_create_from_file_segmented(MPI_Comm comm,
     if (n * type_size != nbytes) {
         assert(0);
         fprintf(stderr, "array_create_from_file: Wrong datatype - data pair\n");
+        fflush(stderr);
         return 1;
     }
 

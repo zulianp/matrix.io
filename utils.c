@@ -11,6 +11,14 @@ ptrdiff_t to_ptrdiff_t(MPI_Datatype type, const char *data) {
         return *((long *)data);
     }
 
+    if(type == MPI_INT32_T) {
+        return *((int32_t *)data); 
+    }
+
+    if(type == MPI_INT64_T) {
+        return *((int64_t *)data); 
+    }
+
     if (type == MPI_UNSIGNED_LONG) {
         return *((unsigned long *)data);
     }
@@ -30,6 +38,10 @@ double to_double(MPI_Datatype type, const char *data) {
     }
 
     if (type == MPI_INT) {
+        return *((int *)data);
+    }
+
+    if (type == MPI_UINT32_T) {
         return *((int *)data);
     }
 
