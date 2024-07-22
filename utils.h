@@ -38,6 +38,7 @@ ptrdiff_t to_ptrdiff_t(MPI_Datatype type, const char *data);
 double to_double(MPI_Datatype type, const char *data);
 
 MPI_Datatype string_to_mpi_datatype(const char *name);
+MPI_Datatype mpi_type_from_file_extension(const char *path);
 
 #ifdef __cplusplus
 }
