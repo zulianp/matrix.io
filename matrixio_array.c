@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int SEGMENT_CONVERT_MAX = 1000000;
+
 int array_create_from_file(MPI_Comm comm,
                            const char* path,
                            MPI_Datatype type,
@@ -156,7 +158,7 @@ int array_read_convert(MPI_Comm comm,
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 
-    const int segment_size = MIN(INT_MAX, nlocal);
+    const int segment_size = MIN(SEGMENT_CONVERT_MAX, nlocal);
 
     MPI_Status status;
     MPI_Offset nbytes;
@@ -166,22 +168,17 @@ int array_read_convert(MPI_Comm comm,
     CATCH_MPI_ERROR(MPI_File_get_size(file, &nbytes));
 
     ptrdiff_t n = nbytes / file_type_size;
-    if (n * type_size != nbytes) {
+    if (n * file_type_size != nbytes) {
         assert(0);
         fprintf(stderr, "array_create_from_file: Wrong datatype - data pair\n");
         fflush(stderr);
         return 1;
     }
 
-    ptrdiff_t remainder = n - nlocal * size;
-
-    if (remainder > rank) {
-        nlocal += 1;
-    }
-
     void* buffer = 0;
 
     if(file_type_size > type_size) {
+        printf("ALLOCATING BUFFER!\n");
         buffer = malloc(segment_size * file_type_size);
     } else {
         buffer = data;
@@ -191,24 +188,21 @@ int array_read_convert(MPI_Comm comm,
     long offset = 0;
     CATCH_MPI_ERROR(MPI_Exscan(&lnl, &offset, 1, MPI_LONG, MPI_SUM, comm));
 
-    offset += MIN(rank, remainder);
-
     int nrounds = nlocal / segment_size;
     nrounds += nrounds * ((ptrdiff_t)segment_size) < nlocal;
     CATCH_MPI_ERROR(MPI_Exscan(MPI_IN_PLACE, &nrounds, 1, MPI_INT, MPI_MAX, comm));
 
     for (int i = 0; i < nrounds; i++) {
+        const ptrdiff_t data_offset = i * ((ptrdiff_t)segment_size) * type_size;
         int segment_size_i = MIN(segment_size, nlocal - i * ((ptrdiff_t)segment_size));
-        ptrdiff_t data_offset = i * ((ptrdiff_t)segment_size) * file_type_size;
-        MPI_Offset byte_offset_i = (offset + i * segment_size) * file_type_size;
-
-        CATCH_MPI_ERROR(MPI_File_read_at_all(file, byte_offset_i, buffer, segment_size_i, file_type, &status));
-
-        array_convert(segment_size_i, file_type, buffer, type, &((char*)data)[data_offset]);
 
         if(file_type_size <= type_size) {
             buffer = &((char*)data)[data_offset];
         }
+
+        MPI_Offset byte_offset_i = (offset + i * segment_size) * file_type_size;
+        CATCH_MPI_ERROR(MPI_File_read_at_all(file, byte_offset_i, buffer, segment_size_i, file_type, &status));
+        array_convert(segment_size_i, file_type, buffer, type, &((char*)data)[data_offset]);
     }
 
     if(file_type_size > type_size) {
@@ -413,7 +407,7 @@ int array_range_select(MPI_Comm comm,
             from_type_* d_from = (from_type_*)from;                        \
             if (to_mpi_type_ == to_type) {                                 \
                 to_type_* d_to = (to_type_*)to;                            \
-                for (ptrdiff_t i = 0; i < size; i++) {                     \
+                for (ptrdiff_t i = 0; i < n; i++) {                     \
                     d_to[i] = d_from[i];                                   \
                 }                                                          \
                 return 0;                                                  \
@@ -421,17 +415,33 @@ int array_range_select(MPI_Comm comm,
         }                                                                  \
     } while (0)
 
-int array_convert(const ptrdiff_t size, MPI_Datatype from_type, const void* from, MPI_Datatype to_type, void* to) {
+
+// For supporting in-place conversion
+#define ARRAY_CONVERT_REVERSE_(from_mpi_type_, from_type_, to_mpi_type_, to_type_) \
+    do {                                                                   \
+        if (from_mpi_type_ == from_type) {                                 \
+            from_type_* d_from = (from_type_*)from;                        \
+            if (to_mpi_type_ == to_type) {                                 \
+                to_type_* d_to = (to_type_*)to;                            \
+                for (ptrdiff_t i = n-1; i >= 0; --i) {                     \
+                    d_to[i] = d_from[i];                                   \
+                }                                                          \
+                return 0;                                                  \
+            }                                                              \
+        }                                                                  \
+    } while (0)
+
+int array_convert(const ptrdiff_t n, MPI_Datatype from_type, const void* from, MPI_Datatype to_type, void* to) {
     int from_size;
     CATCH_MPI_ERROR(MPI_Type_size(from_type, &from_size));
 
     if (from_type == to_type) {
-        memcpy(to, from, size * from_size);
+        memcpy(to, from, n * from_size);
         return 0;
     }
 
     // Floating points
-    ARRAY_CONVERT_(MPI_FLOAT, float, MPI_DOUBLE, double);
+    ARRAY_CONVERT_REVERSE_(MPI_FLOAT, float, MPI_DOUBLE, double);
     ARRAY_CONVERT_(MPI_DOUBLE, double, MPI_FLOAT, float);
 
     // Indices
@@ -439,13 +449,13 @@ int array_convert(const ptrdiff_t size, MPI_Datatype from_type, const void* from
     ARRAY_CONVERT_(MPI_LONG, long, MPI_INT32_T, int32_t);
     ARRAY_CONVERT_(MPI_LONG, long, MPI_INT64_T, int64_t);
 
-    ARRAY_CONVERT_(MPI_INT, int, MPI_LONG, long);
     ARRAY_CONVERT_(MPI_INT, int, MPI_INT32_T, int32_t);
-    ARRAY_CONVERT_(MPI_INT, int, MPI_INT64_T, int64_t);
+    ARRAY_CONVERT_REVERSE_(MPI_INT, int, MPI_LONG, long);
+    ARRAY_CONVERT_REVERSE_(MPI_INT, int, MPI_INT64_T, int64_t);
 
     ARRAY_CONVERT_(MPI_INT32_T, int32_t, MPI_INT, int);
-    ARRAY_CONVERT_(MPI_INT32_T, int32_t, MPI_LONG, long);
-    ARRAY_CONVERT_(MPI_INT32_T, int32_t, MPI_INT64_T, int64_t);
+    ARRAY_CONVERT_REVERSE_(MPI_INT32_T, int32_t, MPI_LONG, long);
+    ARRAY_CONVERT_REVERSE_(MPI_INT32_T, int32_t, MPI_INT64_T, int64_t);
 
     ARRAY_CONVERT_(MPI_INT64_T, int64_t, MPI_INT, int);
     ARRAY_CONVERT_(MPI_INT64_T, int64_t, MPI_LONG, long);

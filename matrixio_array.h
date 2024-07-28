@@ -33,6 +33,13 @@ int array_read_segmented(MPI_Comm comm,
                          ptrdiff_t nlocal,
                          ptrdiff_t nglobal);
 
+int array_read_convert(MPI_Comm comm,
+                       const char* path,
+                       MPI_Datatype type,
+                       void* data,
+                       ptrdiff_t nlocal,
+                       ptrdiff_t nglobal);
+
 int array_write(MPI_Comm comm,
                 const char *path,
                 MPI_Datatype type,

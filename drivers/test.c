@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 int main(int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
@@ -35,13 +36,43 @@ int main(int argc, char *argv[]) {
     }
 
     {
-        // Run read rhs
+        // Run read vector
         ptrdiff_t nlocal, nglobal;
         char *data;
         array_create_from_file(comm, "data/test/rhs.raw", MPI_FLOAT, (void **)&data, &nlocal, &nglobal);
         array_write(comm, "data/test/dump.raw", MPI_FLOAT, data, nlocal, nglobal);
         array_write_segmented(comm, "data/test/dump_seg.raw", MPI_FLOAT, data, 2, nlocal, nglobal);
         free(data);
+    }
+
+
+    {
+        ptrdiff_t nlocal = 10;
+        ptrdiff_t nglobal = nlocal * size;
+        double *data = malloc(nlocal * sizeof(double));
+        float *test_data = malloc(nlocal * sizeof(float));
+
+        for(ptrdiff_t i = 0; i < nlocal; i++) {
+            test_data[i] = i;
+        }
+
+        array_write_segmented(comm, "data/test/dump.float32", MPI_FLOAT, test_data, 2, nlocal, nglobal);
+
+        // Read and convert to MPI type (float32 -> double)
+        array_read_convert(comm, "data/test/dump.float32", MPI_DOUBLE, data, nlocal, nglobal);
+
+        for(ptrdiff_t i = 0; i < nlocal; i++) {
+            int expected = test_data[i];
+            int actual = data[i];
+
+            assert(expected == actual);
+            if(expected != actual) {
+                printf("%f != %g\n", test_data[i], data[i]);
+            }
+        }
+
+        free(data);
+        free(test_data);
     }
 
     return MPI_Finalize();
