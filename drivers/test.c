@@ -45,7 +45,6 @@ int main(int argc, char *argv[]) {
         free(data);
     }
 
-
     {
         ptrdiff_t nlocal = 10;
         ptrdiff_t nglobal = nlocal * size;
@@ -56,10 +55,12 @@ int main(int argc, char *argv[]) {
             test_data[i] = i;
         }
 
-        array_write_segmented(comm, "data/test/dump.float32", MPI_FLOAT, test_data, 2, nlocal, nglobal);
+        array_write_convert(comm, "data/test/dump.float32", MPI_FLOAT, test_data, nlocal, nglobal);
 
         // Read and convert to MPI type (float32 -> double)
-        array_read_convert(comm, "data/test/dump.float32", MPI_DOUBLE, data, nlocal, nglobal);
+        array_read_convert(comm,  "data/test/dump.float32", MPI_DOUBLE, data, nlocal, nglobal);
+        array_write_convert(comm, "data/test/dump.float32", MPI_DOUBLE, data, nlocal, nglobal);
+        array_read_convert(comm,  "data/test/dump.float32", MPI_DOUBLE, data, nlocal, nglobal);
 
         for(ptrdiff_t i = 0; i < nlocal; i++) {
             int expected = test_data[i];

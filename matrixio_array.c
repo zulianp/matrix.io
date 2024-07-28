@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int SEGMENT_CONVERT_MAX = 1000000;
+static int MATRIXIO_SEGMENT_CONVERT_MAX_DEFAULT = 1000000;
 
 int array_create_from_file(MPI_Comm comm,
                            const char* path,
@@ -158,7 +158,9 @@ int array_read_convert(MPI_Comm comm,
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 
-    const int segment_size = MIN(SEGMENT_CONVERT_MAX, nlocal);
+    int MATRIXIO_SEGMENT_CONVERT_MAX = MATRIXIO_SEGMENT_CONVERT_MAX_DEFAULT;
+    MATRIXIO_READ_ENV(MATRIXIO_SEGMENT_CONVERT_MAX, atoi);
+    const int segment_size = MIN(MATRIXIO_SEGMENT_CONVERT_MAX, nlocal);
 
     MPI_Status status;
     MPI_Offset nbytes;
@@ -499,9 +501,11 @@ int array_write_convert(MPI_Comm comm,
     long lnl = nlocal;
     long offset = 0;
 
-    const ptrdiff_t segment_size = MIN(SEGMENT_CONVERT_MAX, nlocal);
+    int MATRIXIO_SEGMENT_CONVERT_MAX = MATRIXIO_SEGMENT_CONVERT_MAX_DEFAULT;
+    MATRIXIO_READ_ENV(MATRIXIO_SEGMENT_CONVERT_MAX, atoi);
+    const ptrdiff_t segment_size = MIN(MATRIXIO_SEGMENT_CONVERT_MAX, nlocal);
     int nrounds = nlocal / segment_size;
-    nrounds += nrounds * ((ptrdiff_t)segment_size) < nlocal;
+    nrounds += nrounds * segment_size < nlocal;
 
     if (size > 1) {
         CATCH_MPI_ERROR(MPI_Exscan(&lnl, &offset, 1, MPI_LONG, MPI_SUM, comm));
@@ -510,14 +514,13 @@ int array_write_convert(MPI_Comm comm,
 
     void* buffer = malloc(segment_size * file_type_size);
     for (int i = 0; i < nrounds; i++) {
-        int segment_size_i = MIN(segment_size, nlocal - i * ((ptrdiff_t)segment_size));
+        const ptrdiff_t segment_size_i = MIN(segment_size, nlocal - i * segment_size);
 
-        // ((char*)data)[i * ((ptrdiff_t)segment_size) * file_type_size]
         array_convert(
-            segment_size_i, type, &((char*)data)[i * ((ptrdiff_t)segment_size) * type_size], file_type, buffer);
+            segment_size_i, type, &((char*)data)[i * segment_size * type_size], file_type, buffer);
 
         CATCH_MPI_ERROR(MPI_File_write_at_all(
-            file, (offset + i * segment_size) * file_type_size, &buffer, segment_size_i, type, &status));
+            file, (offset + i * segment_size) * file_type_size, buffer, segment_size_i, file_type, &status));
     }
 
     free(buffer);
