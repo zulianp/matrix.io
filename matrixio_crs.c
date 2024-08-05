@@ -362,7 +362,7 @@ int block_crs_read(MPI_Comm comm,
         glob(values_pattern, GLOB_MARK, NULL, &gl);
         block_size = gl.gl_pathc;
 
-        printf("block_size (%d):\n", block_size);
+        // printf("block_size (%d):\n", block_size);
         for (int k = 0; k < block_size; k++) {
             printf("%s\n", gl.gl_pathv[k]);
         }

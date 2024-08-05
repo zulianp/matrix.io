@@ -26,6 +26,8 @@ int array_create_from_file_segmented(MPI_Comm comm,
                                      const int segment_size,
                                      ptrdiff_t* out_nlocal,
                                      ptrdiff_t* out_nglobal) {
+    assert(!mpi_type_file_compatible(type, path));
+
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);
@@ -92,6 +94,8 @@ int array_read_segmented(MPI_Comm comm,
                          int segment_size,
                          ptrdiff_t nlocal,
                          ptrdiff_t nglobal) {
+    assert(!mpi_type_file_compatible(type, path));
+
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);
@@ -265,6 +269,8 @@ int array_write_segmented(MPI_Comm comm,
                           const int segment_size,
                           ptrdiff_t nlocal,
                           ptrdiff_t nglobal) {
+    assert(!mpi_type_file_compatible(type, path));
+    
     int rank, size;
 
     MPI_Comm_rank(comm, &rank);

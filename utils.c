@@ -100,53 +100,76 @@ MPI_Datatype string_to_mpi_datatype(const char *name) {
     return MPI_CHAR;
 }
 
+static inline int extcmp(const char *path, const int len, const char *ext) {
+    const int ext_len = strlen(ext);
+    if (len < ext_len + 1) {
+        return 1;
+    }
+
+    if (strcmp(&path[len - 1 - ext_len], ".float32") == 0) {
+        return 0;
+    }
+
+    return 1;
+}
+
 MPI_Datatype mpi_type_from_file_extension(const char *path) {
     //
     ptrdiff_t len = strlen(path);
 
     // .raw (if extension is e.g., .float32.raw)
-    if (strcmp(&path[len - 1 - 4], ".raw") == 0) {
+    if (extcmp(path, len, ".raw") == 0) {
         // skip
         len -= 4;
     }
 
     // .bin (if extension is e.g., .float32.bin)
-    if (strcmp(&path[len - 1 - 4], ".bin") == 0) {
+    if (extcmp(path, len, ".bin") == 0) {
         // skip
         len -= 4;
     }
 
-    if (strcmp(&path[len - 1 - 8], ".float32") == 0 || strcmp(&path[len - 1 - 6], ".float")) {
+    if (extcmp(path, len, ".float32") == 0 || extcmp(path, len, ".float") == 0) {
         return MPI_FLOAT;
     }
 
-    if (strcmp(&path[len - 1 - 8], ".float64") == 0 || strcmp(&path[len - 1 - 7], ".double") == 0) {
+    if (extcmp(path, len, ".float64") == 0 || extcmp(path, len, ".double") == 0) {
         return MPI_DOUBLE;
     }
 
-    if (strcmp(&path[len - 1 - 6], ".int32") == 0) {
+    if (extcmp(path, len, ".int32") == 0) {
         return MPI_INT32_T;
     }
 
-    if (strcmp(&path[len - 1 - 7], ".uint32") == 0) {
+    if (extcmp(path, len, ".uint32") == 0) {
         return MPI_UINT32_T;
     }
 
-    if (strcmp(&path[len - 1 - 6], ".int") == 0) {
+    if (extcmp(path, len, ".int") == 0) {
         return MPI_INT;
     }
 
-    if (strcmp(&path[len - 1 - 6], ".int64") == 0) {
+    if (extcmp(path, len, ".int64") == 0) {
         return MPI_INT64_T;
     }
 
-    if (strcmp(&path[len - 1 - 5], ".long") == 0) {
+    if (extcmp(path, len, ".long") == 0) {
         return MPI_LONG;
     }
 
-    if (strcmp(&path[len - 1 - 6], ".ulong") == 0) {
+    if (extcmp(path, len, ".ulong") == 0) {
         return MPI_UNSIGNED_LONG;
     }
 
     return MPI_DATATYPE_NULL;
+}
+
+int mpi_type_file_compatible(const MPI_Datatype type, const char *path) {
+    MPI_Datatype file_type = mpi_type_from_file_extension(path);
+    if (file_type == MPI_DATATYPE_NULL || file_type == type) {
+        return 0;
+    } else {
+        assert(0);
+        return 1;
+    }
 }
