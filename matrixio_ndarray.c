@@ -36,9 +36,9 @@ int ndarray_create_from_file_segmented(MPI_Comm comm,
     MPI_File file;
     int type_size;
 
-    CATCH_MPI_ERROR(MPI_File_open(comm, path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
-    CATCH_MPI_ERROR(MPI_File_get_size(file, &nbytes));
-    CATCH_MPI_ERROR(MPI_Type_size(type, &type_size));
+    MPI_CATCH_ERROR(MPI_File_open(comm, path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
+    MPI_CATCH_ERROR(MPI_File_get_size(file, &nbytes));
+    MPI_CATCH_ERROR(MPI_Type_size(type, &type_size));
 
     ptrdiff_t ntotal = nbytes / type_size;
     ptrdiff_t ntotal_user = 1;
@@ -85,12 +85,12 @@ int ndarray_create_from_file_segmented(MPI_Comm comm,
     int nrounds = nl / segment_size;
     nrounds += nrounds * ((ptrdiff_t)segment_size) < nl;
 
-    CATCH_MPI_ERROR(MPI_Exscan(&nl, &offset, 1, MPI_LONG, MPI_SUM, comm));
-    CATCH_MPI_ERROR(MPI_Exscan(MPI_IN_PLACE, &nrounds, 1, MPI_INT, MPI_MAX, comm));
+    MPI_CATCH_ERROR(MPI_Exscan(&nl, &offset, 1, MPI_LONG, MPI_SUM, comm));
+    MPI_CATCH_ERROR(MPI_Exscan(MPI_IN_PLACE, &nrounds, 1, MPI_INT, MPI_MAX, comm));
 
     for (int i = 0; i < nrounds; i++) {
         int segment_size_i = MIN(segment_size, nl - i * ((ptrdiff_t)segment_size));
-        CATCH_MPI_ERROR(MPI_File_read_at_all(file,
+        MPI_CATCH_ERROR(MPI_File_read_at_all(file,
                                              (offset + i * segment_size) * type_size,
                                              &((char *)data)[i * ((ptrdiff_t)segment_size) * type_size],
                                              segment_size_i,
@@ -98,7 +98,7 @@ int ndarray_create_from_file_segmented(MPI_Comm comm,
                                              &status));
     }
 
-    CATCH_MPI_ERROR(MPI_File_close(&file));
+    MPI_CATCH_ERROR(MPI_File_close(&file));
 
     *data_ptr = data;
     return 0;
@@ -136,22 +136,22 @@ int ndarray_write(MPI_Comm comm,
     MPI_File file;
     int type_size;
 
-    CATCH_MPI_ERROR(MPI_Type_size(type, &type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(type, &type_size));
     nbytes = ntotal * type_size;
 
-    CATCH_MPI_ERROR(MPI_File_open(comm, path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
+    MPI_CATCH_ERROR(MPI_File_open(comm, path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
     MPI_File_set_size(file, nbytes);
 
     long lnl = ntotal_local;
     long offset = 0;
 
     if (size > 1) {
-        CATCH_MPI_ERROR(MPI_Exscan(&lnl, &offset, 1, MPI_LONG, MPI_SUM, comm));
+        MPI_CATCH_ERROR(MPI_Exscan(&lnl, &offset, 1, MPI_LONG, MPI_SUM, comm));
     }
 
-    CATCH_MPI_ERROR(MPI_File_write_at_all(file, offset * type_size, data, ntotal_local, type, &status));
+    MPI_CATCH_ERROR(MPI_File_write_at_all(file, offset * type_size, data, ntotal_local, type, &status));
 
-    CATCH_MPI_ERROR(MPI_File_close(&file));
+    MPI_CATCH_ERROR(MPI_File_close(&file));
 
     return 0;
 }
@@ -176,10 +176,10 @@ int ndarray_write_segmented(MPI_Comm comm,
     // MPI_File file;
     // int type_size;
 
-    // CATCH_MPI_ERROR(MPI_Type_size(type, &type_size));
+    // MPI_CATCH_ERROR(MPI_Type_size(type, &type_size));
     // nbytes = nglobal * type_size;
 
-    // CATCH_MPI_ERROR(MPI_File_open(comm, path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
+    // MPI_CATCH_ERROR(MPI_File_open(comm, path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
     // MPI_File_set_size(file, nbytes);
 
     // long lnl = nlocal;
@@ -189,13 +189,13 @@ int ndarray_write_segmented(MPI_Comm comm,
     // nrounds += nrounds * ((ptrdiff_t)segment_size) < nlocal;
 
     // if (size > 1) {
-    //     CATCH_MPI_ERROR(MPI_Exscan(&lnl, &offset, 1, MPI_LONG, MPI_SUM, comm));
-    //     CATCH_MPI_ERROR(MPI_Exscan(MPI_IN_PLACE, &nrounds, 1, MPI_INT, MPI_MAX, comm));
+    //     MPI_CATCH_ERROR(MPI_Exscan(&lnl, &offset, 1, MPI_LONG, MPI_SUM, comm));
+    //     MPI_CATCH_ERROR(MPI_Exscan(MPI_IN_PLACE, &nrounds, 1, MPI_INT, MPI_MAX, comm));
     // }
 
     // for (int i = 0; i < nrounds; i++) {
     //     int segment_size_i = MIN(segment_size, nlocal - i * ((ptrdiff_t)segment_size));
-    //     CATCH_MPI_ERROR(MPI_File_write_at_all(file,
+    //     MPI_CATCH_ERROR(MPI_File_write_at_all(file,
     //                                           (offset + i * segment_size) * type_size,
     //                                           &((char *)data)[i * ((ptrdiff_t)segment_size) * type_size],
     //                                           segment_size_i,
@@ -203,6 +203,6 @@ int ndarray_write_segmented(MPI_Comm comm,
     //                                           &status));
     // }
 
-    // CATCH_MPI_ERROR(MPI_File_close(&file));
+    // MPI_CATCH_ERROR(MPI_File_close(&file));
     return 0;
 }

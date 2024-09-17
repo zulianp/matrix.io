@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#define CATCH_MPI_ERROR(err)                                 \
+#define MPI_CATCH_ERROR(err)                                 \
     {                                                        \
         if (err != MPI_SUCCESS) {                            \
             char string_buff[4096];                          \

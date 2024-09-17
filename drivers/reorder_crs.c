@@ -77,10 +77,10 @@ int main(int argc, char *argv[]) {
     }
 
     int values_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(values_type, &values_type_size));
 
     int colidx_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(colidx_type, &colidx_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(colidx_type, &colidx_type_size));
 
     ptrdiff_t nl = 0, ng = 0;
     int *parts = 0;
