@@ -62,9 +62,9 @@ int main(int argc, char *argv[]) {
     int rowptr_type_size;
     int colidx_type_size;
     int values_type_size;
-    CATCH_MPI_ERROR(MPI_Type_size(crs.rowptr_type, &rowptr_type_size));
-    CATCH_MPI_ERROR(MPI_Type_size(crs.colidx_type, &colidx_type_size));
-    CATCH_MPI_ERROR(MPI_Type_size(crs.values_type, &values_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(crs.rowptr_type, &rowptr_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(crs.colidx_type, &colidx_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(crs.values_type, &values_type_size));
 
     ptrdiff_t nnz = crs.lnnz;
 

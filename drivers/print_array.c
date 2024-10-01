@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     array_create_from_file(comm, argv[1], type, (void **)&data, &nlocal, &nglobal);
 
     int type_size;
-    CATCH_MPI_ERROR(MPI_Type_size(type, &type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(type, &type_size));
 
     MPI_Barrier(comm);
 

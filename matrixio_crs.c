@@ -23,13 +23,13 @@ int crs_alloc_same(const crs_t *const tpl, crs_t *result) {
     result->values_type = tpl->values_type;
 
     int rowptr_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(tpl->rowptr_type, &rowptr_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(tpl->rowptr_type, &rowptr_type_size));
 
     int colidx_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(tpl->colidx_type, &colidx_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(tpl->colidx_type, &colidx_type_size));
 
     int values_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(tpl->values_type, &values_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(tpl->values_type, &values_type_size));
 
     result->rowptr = malloc(tpl->lrows * rowptr_type_size);
     result->colidx = malloc(tpl->lnnz * colidx_type_size);
@@ -67,9 +67,9 @@ int crs_graph_read_AoS_block(MPI_Comm comm,
     MPI_Offset rowptr_nbytes = -1;
     int rowptr_type_size = 0;
 
-    CATCH_MPI_ERROR(MPI_File_open(comm, rowptr_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
-    CATCH_MPI_ERROR(MPI_File_get_size(file, &rowptr_nbytes));
-    CATCH_MPI_ERROR(MPI_Type_size(rowptr_type, &rowptr_type_size));
+    MPI_CATCH_ERROR(MPI_File_open(comm, rowptr_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
+    MPI_CATCH_ERROR(MPI_File_get_size(file, &rowptr_nbytes));
+    MPI_CATCH_ERROR(MPI_Type_size(rowptr_type, &rowptr_type_size));
 
     ptrdiff_t nrows = rowptr_nbytes / rowptr_type_size;
 
@@ -124,8 +124,8 @@ int crs_graph_read_AoS_block(MPI_Comm comm,
     // Read rowptr
     ///////////////////////////////////////////////////////
 
-    CATCH_MPI_ERROR(MPI_File_read_at_all(file, offset * rowptr_type_size, rowptr, nlocal + 1, rowptr_type, &status));
-    CATCH_MPI_ERROR(MPI_File_close(&file));
+    MPI_CATCH_ERROR(MPI_File_read_at_all(file, offset * rowptr_type_size, rowptr, nlocal + 1, rowptr_type, &status));
+    MPI_CATCH_ERROR(MPI_File_close(&file));
 
     ///////////////////////////////////////////////////////
     // Read colidx
@@ -141,17 +141,17 @@ int crs_graph_read_AoS_block(MPI_Comm comm,
     int colidx_type_size = 0;
 
     crs->lnnz = nnz;
-    CATCH_MPI_ERROR(MPI_Type_size(colidx_type, &colidx_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(colidx_type, &colidx_type_size));
 
     char *colidx = (char *)malloc(nnz * colidx_type_size);
 
-    CATCH_MPI_ERROR(MPI_File_open(comm, colidx_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
+    MPI_CATCH_ERROR(MPI_File_open(comm, colidx_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
 
-    CATCH_MPI_ERROR(MPI_File_get_size(file, &gnnz_bytes));
+    MPI_CATCH_ERROR(MPI_File_get_size(file, &gnnz_bytes));
 
-    CATCH_MPI_ERROR(MPI_File_read_at_all(file, start * colidx_type_size, colidx, nnz, colidx_type, &status));
+    MPI_CATCH_ERROR(MPI_File_read_at_all(file, start * colidx_type_size, colidx, nnz, colidx_type, &status));
 
-    CATCH_MPI_ERROR(MPI_File_close(&file));
+    MPI_CATCH_ERROR(MPI_File_close(&file));
 
     ///////////////////////////////////////////////////////
 
@@ -193,13 +193,13 @@ int crs_graph_read_values(MPI_Comm comm,
     MPI_Status status;
 
     int values_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(values_type, &values_type_size));
 
-    CATCH_MPI_ERROR(MPI_File_open(comm, values_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
+    MPI_CATCH_ERROR(MPI_File_open(comm, values_path, MPI_MODE_RDONLY, MPI_INFO_NULL, &file));
 
-    CATCH_MPI_ERROR(MPI_File_read_at_all(file, crs->start * values_type_size, values, crs->lnnz, values_type, &status));
+    MPI_CATCH_ERROR(MPI_File_read_at_all(file, crs->start * values_type_size, values, crs->lnnz, values_type, &status));
 
-    CATCH_MPI_ERROR(MPI_File_close(&file));
+    MPI_CATCH_ERROR(MPI_File_close(&file));
     return 0;
 }
 
@@ -285,7 +285,7 @@ int crs_read(MPI_Comm comm,
     // crs_graph_read(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, &graph);
 
     // int values_type_size = 0;
-    // CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+    // MPI_CATCH_ERROR(MPI_Type_size(values_type, &values_type_size));
     // char *values = (char *)malloc(graph.lnnz * values_type_size);
 
     // crs_graph_read_values(comm, &graph, values_path, values_type, values);
@@ -331,7 +331,7 @@ int crs_read_AoS_block(MPI_Comm comm,
     crs_graph_read_AoS_block(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, block_size, &graph);
 
     int values_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(values_type, &values_type_size));
     char *values = (char *)malloc(graph.lnnz * values_type_size);
 
     crs_graph_read_values(comm, &graph, values_path, values_type, values);
@@ -353,7 +353,7 @@ int block_crs_read(MPI_Comm comm,
     crs_graph_t graph;
     crs_graph_read(comm, rowptr_path, colidx_path, rowptr_type, colidx_type, &graph);
     int values_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(values_type, &values_type_size));
 
     int block_size = 0;
     matrixio_byte_t **values;
@@ -362,7 +362,7 @@ int block_crs_read(MPI_Comm comm,
         glob(values_pattern, GLOB_MARK, NULL, &gl);
         block_size = gl.gl_pathc;
 
-        printf("block_size (%d):\n", block_size);
+        // printf("block_size (%d):\n", block_size);
         for (int k = 0; k < block_size; k++) {
             printf("%s\n", gl.gl_pathv[k]);
         }
@@ -420,35 +420,35 @@ int crs_graph_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_p
     int rowptr_type_size = 0;
     int colidx_type_size = 0;
 
-    CATCH_MPI_ERROR(MPI_Type_size(rowptr_type, &rowptr_type_size));
-    CATCH_MPI_ERROR(MPI_Type_size(colidx_type, &colidx_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(rowptr_type, &rowptr_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(colidx_type, &colidx_type_size));
 
     {
         // Write rowptr
-        CATCH_MPI_ERROR(MPI_File_open(comm, rowptr_path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
+        MPI_CATCH_ERROR(MPI_File_open(comm, rowptr_path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
 
         MPI_File_set_size(file, (crs->grows + 1) * rowptr_type_size);
 
-        CATCH_MPI_ERROR(MPI_File_write_at_all(file,
+        MPI_CATCH_ERROR(MPI_File_write_at_all(file,
                                               crs->rowoffset * rowptr_type_size,
                                               crs->rowptr,
                                               crs->lrows + (rank == size - 1),
                                               rowptr_type,
                                               &status));
 
-        CATCH_MPI_ERROR(MPI_File_close(&file));
+        MPI_CATCH_ERROR(MPI_File_close(&file));
     }
 
     {
         // Write colidx
-        CATCH_MPI_ERROR(MPI_File_open(comm, colidx_path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
+        MPI_CATCH_ERROR(MPI_File_open(comm, colidx_path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
 
         MPI_File_set_size(file, crs->gnnz * colidx_type_size);
 
-        CATCH_MPI_ERROR(
+        MPI_CATCH_ERROR(
             MPI_File_write_at_all(file, crs->start * colidx_type_size, crs->colidx, crs->lnnz, colidx_type, &status));
 
-        CATCH_MPI_ERROR(MPI_File_close(&file));
+        MPI_CATCH_ERROR(MPI_File_close(&file));
     }
 
     return 0;
@@ -468,16 +468,16 @@ int crs_graph_write_values(MPI_Comm comm,
     MPI_Status status;
 
     int values_type_size = 0;
-    CATCH_MPI_ERROR(MPI_Type_size(values_type, &values_type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(values_type, &values_type_size));
 
-    CATCH_MPI_ERROR(MPI_File_open(comm, values_path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
+    MPI_CATCH_ERROR(MPI_File_open(comm, values_path, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file));
 
     MPI_File_set_size(file, crs->gnnz * values_type_size);
 
-    CATCH_MPI_ERROR(
+    MPI_CATCH_ERROR(
         MPI_File_write_at_all(file, crs->start * values_type_size, values, crs->lnnz, values_type, &status));
 
-    CATCH_MPI_ERROR(MPI_File_close(&file));
+    MPI_CATCH_ERROR(MPI_File_close(&file));
     return 0;
 }
 

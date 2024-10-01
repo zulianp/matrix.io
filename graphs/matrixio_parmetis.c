@@ -83,13 +83,13 @@ int crs_graph_decompose(MPI_Comm comm, crs_graph_t*crs, const int n_parts, int*c
     idx_t edgecut;
 
     int type_size;
-    CATCH_MPI_ERROR(MPI_Type_size(crs->rowptr_type, &type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(crs->rowptr_type, &type_size));
 
     if (type_size != sizeof(idx_t)) {
         MPI_Abort(comm, -1);
     }
 
-    CATCH_MPI_ERROR(MPI_Type_size(crs->colidx_type, &type_size));
+    MPI_CATCH_ERROR(MPI_Type_size(crs->colidx_type, &type_size));
 
     if (type_size != sizeof(idx_t)) {
         MPI_Abort(comm, -1);

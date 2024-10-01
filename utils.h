@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#define CATCH_MPI_ERROR(err)                                 \
+#define MPI_CATCH_ERROR(err)                                 \
     {                                                        \
         if (err != MPI_SUCCESS) {                            \
             char string_buff[4096];                          \
@@ -38,6 +38,10 @@ ptrdiff_t to_ptrdiff_t(MPI_Datatype type, const char *data);
 double to_double(MPI_Datatype type, const char *data);
 
 MPI_Datatype string_to_mpi_datatype(const char *name);
+MPI_Datatype mpi_type_from_file_extension(const char *path);
+
+/// @return 0 if ok and 1 of not
+int mpi_type_file_compatible(const MPI_Datatype type, const char*path);
 
 #ifdef __cplusplus
 }
