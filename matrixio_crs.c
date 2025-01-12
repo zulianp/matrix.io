@@ -3,10 +3,14 @@
 #include "utils.h"
 
 #include <assert.h>
-#include <glob.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef _WIN32
+#include <glob.h>
+#endif
 
 #define MAX_PATH_LENGTH 4096
 
