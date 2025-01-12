@@ -103,6 +103,7 @@ int crs_read_AoS_block(MPI_Comm comm,
                        const int block_size,
                        crs_t *crs);
 
+#ifndef MATRIXIO_WINDOWS
 int block_crs_read(MPI_Comm comm,
                    const char *rowptr_path,
                    const char *colidx_path,
@@ -111,8 +112,7 @@ int block_crs_read(MPI_Comm comm,
                    MPI_Datatype colidx_type,
                    MPI_Datatype values_type,
                    block_crs_t *crs);
-
-
+#endif
 
 int crs_read_str(MPI_Comm comm,
                  const char *rowptr_path,
@@ -131,7 +131,11 @@ int crs_read_folder(MPI_Comm comm,
                     crs_t *crs);
 
 int crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, const char *values_path, crs_t *crs);
-int block_crs_write(MPI_Comm comm, const char *rowptr_path, const char *colidx_path, const char *values_format, block_crs_t *crs);
+int block_crs_write(MPI_Comm comm,
+                    const char *rowptr_path,
+                    const char *colidx_path,
+                    const char *values_format,
+                    block_crs_t *crs);
 
 int crs_write_folder(MPI_Comm comm, const char *folder, crs_t *crs);
 

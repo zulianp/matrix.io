@@ -103,12 +103,12 @@ int crs_graph_read_AoS_block(MPI_Comm comm,
 #ifndef NDEBUG
     long ntotal = nlocal;
     MPI_Allreduce(MPI_IN_PLACE, &ntotal, 1, MPI_LONG, MPI_SUM, comm);
-    if(ntotal != nrows) {
-        printf("ntotal != nrows, %ld != %ld!\n", ntotal, nrows);    
+    if (ntotal != nrows) {
+        printf("ntotal != nrows, %ld != %ld!\n", ntotal, nrows);
         fflush(stdout);
     }
     assert(ntotal == nrows);
-    
+
 #endif
 
     ///////////////////////////////////////////////////////
@@ -298,10 +298,10 @@ int crs_read(MPI_Comm comm,
     int MATRIXIO_CRS_READ_BLOCK_SIZE = 1;
     MATRIXIO_READ_ENV(MATRIXIO_CRS_READ_BLOCK_SIZE, atoi);
 
-    if(MATRIXIO_CRS_READ_BLOCK_SIZE != 1) {
+    if (MATRIXIO_CRS_READ_BLOCK_SIZE != 1) {
         int rank;
         MPI_Comm_rank(comm, &rank);
-        if(!rank) {
+        if (!rank) {
             printf("MATRIXIO_CRS_READ_BLOCK_SIZE=%d\n", MATRIXIO_CRS_READ_BLOCK_SIZE);
             fflush(stdout);
         }
@@ -341,6 +341,8 @@ int crs_read_AoS_block(MPI_Comm comm,
     crs->values_type = values_type;
     return 0;
 }
+
+#ifndef MATRIXIO_WINDOWS
 
 int block_crs_read(MPI_Comm comm,
                    const char *rowptr_path,
@@ -385,6 +387,10 @@ int block_crs_read(MPI_Comm comm,
     crs->block_size = block_size;
     return 0;
 }
+
+#else
+#warning "Function block_crs_read not yet supported for Windows!"
+#endif
 
 int crs_read_folder(MPI_Comm comm,
                     const char *folder,
