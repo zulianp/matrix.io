@@ -1,0 +1,17 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(MPI COMPONENTS C)
+
+include("${CMAKE_CURRENT_LIST_DIR}/matrixioTargets.cmake")
+
+if(TARGET matrixio::extras)
+  find_dependency(MPI COMPONENTS CXX)
+endif()
+
+if(TARGET matrixio::parmetis)
+  list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+  find_dependency(ParMETIS)
+endif()
+
