@@ -3,6 +3,15 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 void array_dtof(ptrdiff_t n, const double* const in, float* const out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
