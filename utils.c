@@ -171,8 +171,11 @@ int mpi_type_file_compatible(const MPI_Datatype type, const char *path) {
     int type_size;
     MPI_CATCH_ERROR(MPI_Type_size(type, &type_size));
 
-    int file_type_size;
-    MPI_CATCH_ERROR(MPI_Type_size(file_type, &file_type_size));
+    int file_type_size = 0;
+
+    if(file_type != MPI_DATATYPE_NULL) {
+        MPI_CATCH_ERROR(MPI_Type_size(file_type, &file_type_size));
+    }
 
     if (file_type == MPI_DATATYPE_NULL || file_type_size == type_size) {
         return 0;
