@@ -114,6 +114,8 @@ static inline int extcmp(const char *path, const int len, const char *ext) {
     return 1;
 }
 
+#define MIO_DPRINT(a) printf("%s: %s\n",#a, path)
+
 MPI_Datatype mpi_type_from_file_extension(const char *path) {
     //
     ptrdiff_t len = strlen(path);
@@ -131,18 +133,22 @@ MPI_Datatype mpi_type_from_file_extension(const char *path) {
     }
 
     if (extcmp(path, len, ".float32") == 0 || extcmp(path, len, ".float") == 0) {
+        MIO_DPRINT(MPI_FLOAT);
         return MPI_FLOAT;
     }
 
     if (extcmp(path, len, ".float64") == 0 || extcmp(path, len, ".double") == 0) {
+        MIO_DPRINT(MPI_DOUBLE);
         return MPI_DOUBLE;
     }
 
     if (extcmp(path, len, ".int32") == 0) {
+        MIO_DPRINT(MPI_INT32_T);
         return MPI_INT32_T;
     }
 
     if (extcmp(path, len, ".uint32") == 0) {
+        MIO_DPRINT(MPI_UINT32_T);
         return MPI_UINT32_T;
     }
 
