@@ -107,7 +107,7 @@ static inline int extcmp(const char *path, const int len, const char *ext) {
         return 1;
     }
 
-    if (strcmp(&path[len - 1 - ext_len], ".float32") == 0) {
+    if (strcmp(&path[len - 1 - ext_len], ext) == 0) {
         return 0;
     }
 
