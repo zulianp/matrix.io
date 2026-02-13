@@ -1,7 +1,7 @@
 #include "utils.h"
 
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 ptrdiff_t to_ptrdiff_t(MPI_Datatype type, const char *data) {
     if (type == MPI_INT) {
@@ -167,10 +167,17 @@ MPI_Datatype mpi_type_from_file_extension(const char *path) {
 
 int mpi_type_file_compatible(const MPI_Datatype type, const char *path) {
     MPI_Datatype file_type = mpi_type_from_file_extension(path);
-    if (file_type == MPI_DATATYPE_NULL || file_type == type) {
+
+    int type_size;
+    MPI_CATCH_ERROR(MPI_Type_size(type, &type_size));
+
+    int file_type_size;
+    MPI_CATCH_ERROR(MPI_Type_size(file_type, &file_type_size));
+
+    if (file_type == MPI_DATATYPE_NULL || file_type_size == type_size) {
         return 0;
     } else {
-        fprintf(stderr, "%s non-matching extension with MPI_Datatype\n", path);
+        fprintf(stderr, "%s non-matching extension with MPI_Datatype (%d != %d)\n", path, file_type_size, type_size);
         assert(0);
         return 1;
     }
