@@ -58,7 +58,7 @@ int array_create_from_file_segmented(MPI_Comm comm,
         nlocal += 1;
     }
 
-    *data = malloc(n * type_size);
+    *data = malloc(nlocal * type_size);
 
     ptrdiff_t offset = rank * uniform_split;
     offset += MIN(rank, remainder);
