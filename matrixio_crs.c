@@ -408,9 +408,9 @@ int crs_read_folder(MPI_Comm comm,
     char colidx_path[MAX_PATH_LENGTH];
     char values_path[MAX_PATH_LENGTH];
 
-    sprintf(rowptr_path, "%s/rowptr.raw", folder);
-    sprintf(colidx_path, "%s/colidx.raw", folder);
-    sprintf(values_path, "%s/values.raw", folder);
+    snprintf(rowptr_path, sizeof(rowptr_path), "%s/rowptr.raw", folder);
+    snprintf(colidx_path, sizeof(colidx_path), "%s/colidx.raw", folder);
+    snprintf(values_path, sizeof(values_path), "%s/values.raw", folder);
 
     return crs_read(comm, rowptr_path, colidx_path, values_path, rowptr_type, colidx_type, values_type, crs);
 }
@@ -511,7 +511,7 @@ int block_crs_write(MPI_Comm comm,
 
     char path[MAX_PATH_LENGTH];
     for (int b = 0; b < crs->block_size; b++) {
-        sprintf(path, values_format, b);
+        snprintf(path, sizeof(path), values_format, b);
         crs_graph_write_values(comm, &graph, path, crs->values_type, crs->values[b]);
     }
 
@@ -526,9 +526,9 @@ int crs_write_folder(MPI_Comm comm, const char *folder, crs_t *crs) {
     char colidx_path[MAX_PATH_LENGTH];
     char values_path[MAX_PATH_LENGTH];
 
-    sprintf(rowptr_path, "%s/rowptr.raw", folder);
-    sprintf(colidx_path, "%s/colidx.raw", folder);
-    sprintf(values_path, "%s/values.raw", folder);
+    snprintf(rowptr_path, sizeof(rowptr_path), "%s/rowptr.raw", folder);
+    snprintf(colidx_path, sizeof(colidx_path), "%s/colidx.raw", folder);
+    snprintf(values_path, sizeof(values_path), "%s/values.raw", folder);
 
     return crs_write(comm, rowptr_path, colidx_path, values_path, crs);
 }
